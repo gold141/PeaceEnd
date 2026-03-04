@@ -9,15 +9,15 @@
 
 ## Этап 1: Арт-ассеты (спрайты)
 
-- [ ] Фон поля боя (background_battlefield.png)
-- [ ] Миномёт (mortar.png)
-- [ ] Снаряд (shell.png)
-- [ ] Взрыв (explosion.png)
-- [ ] Пехотинец (infantry.png)
-- [ ] Вражеский окоп (enemy_trench.png)
-- [ ] Вражеский бункер (enemy_bunker.png)
-- [ ] База игрока (player_base.png)
-- [ ] База врага (enemy_base.png)
+- [x] Фон поля боя (background_battlefield.png)
+- [x] Миномёт (mortar.png)
+- [x] Снаряд (shell.png)
+- [x] Взрыв (explosion.png)
+- [x] Пехотинец (infantry.png)
+- [x] Вражеский окоп (enemy_trench.png)
+- [x] Вражеский бункер (enemy_bunker.png)
+- [x] База игрока (player_base.png)
+- [x] База врага (enemy_base.png)
 
 ## Этап 2: Минимальный прототип (MVP)
 

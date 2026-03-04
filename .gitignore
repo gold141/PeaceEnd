@@ -27,3 +27,6 @@ desktop.ini
 # Build exports
 build/
 exports/
+
+# Sprite generation variants (working files)
+tools/variants/
