@@ -10,7 +10,7 @@ extends Node2D
 ## Чувствительность перетягивания (пиксели мыши -> сила)
 @export var drag_sensitivity: float = 1.5
 ## Гравитация (должна совпадать с projectile.gd)
-@export var gravity: float = 980.0
+@export var gravity_force: float = 980.0
 ## Перезарядка (секунды)
 @export var reload_time: float = 2.0
 ## Количество точек предсказания траектории
@@ -108,7 +108,7 @@ func _draw() -> void:
 		var t = i * trajectory_time_step
 		var point = Vector2(
 			vel.x * t,
-			vel.y * t + 0.5 * gravity * t * t
+			vel.y * t + 0.5 * gravity_force * t * t
 		)
 		draw_line(prev_point, point, Color.YELLOW, 2.0)
 		prev_point = point

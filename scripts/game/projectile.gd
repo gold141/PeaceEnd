@@ -6,7 +6,7 @@ extends Area2D
 ## Угол запуска (градусы от горизонтали)
 @export var launch_angle: float = 45.0
 ## Гравитация (пиксели/сек²)
-@export var gravity: float = 980.0
+@export var gravity_force: float = 980.0
 ## Радиус взрыва
 @export var explosion_radius: float = 50.0
 
@@ -29,7 +29,7 @@ func _process(delta: float) -> void:
 		return
 
 	# Apply gravity
-	velocity.y += gravity * delta
+	velocity.y += gravity_force * delta
 
 	# Move
 	position += velocity * delta
