@@ -125,10 +125,10 @@ func _spawn_wave() -> void:
 			wave_options = ["attack_helicopter", "enemy_infantry", "enemy_apc", "kamikaze_drone"]
 
 	# Добавляем в очередь что можем себе позволить
+	# НЕ тратим тут — деньги спишутся в spawn_enemy_unit при фактическом спавне
 	var spent = 0
 	for unit_type in wave_options:
 		var cost = economy.get_cost(unit_type)
-		if spent + cost <= budget and economy.can_enemy_afford(unit_type):
-			economy.enemy_spend(unit_type)
+		if spent + cost <= budget:
 			spawn_queue.append(unit_type)
 			spent += cost
