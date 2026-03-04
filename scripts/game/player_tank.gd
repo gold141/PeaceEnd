@@ -1,21 +1,23 @@
-# scripts/game/enemy_tank.gd
-# Вражеский танк — движется влево, стреляет снарядами по игроку
+# scripts/game/player_tank.gd
+# Танк игрока — тяжёлая броня, параболическая стрельба вправо
 extends StaticBody2D
 
-## Здоровье танка
-@export var max_hp: int = 3
-## Скорость движения (пикс/сек, влево)
-@export var speed: float = 20.0
+## Здоровье
+@export var max_hp: int = 8
+## Скорость езды (пикселей/сек)
+@export var drive_speed: float = 20.0
+## Дальность стрельбы (пиксели)
+@export var fire_range: float = 500.0
 ## Интервал стрельбы (секунды)
 @export var fire_interval: float = 4.0
 ## Разброс угла (градусы)
 @export var spread_degrees: float = 6.0
+## Сила выстрела (px/s)
+@export var fire_power: float = 900.0
 ## Разброс силы (процент)
 @export var spread_power: float = 0.1
-## Сила выстрела (px/s — высокая для пологих снарядов)
-@export var fire_power: float = 900.0
-## Дальность атаки для визуализации (px)
-@export var fire_range: float = 500.0
+## Урон
+@export var damage: float = 2.0
 ## Цвет корпуса
 @export var body_color: Color = Color(0.35, 0.4, 0.3)
 ## Цвет гусениц
@@ -25,22 +27,30 @@ extends StaticBody2D
 ## Время дыма после уничтожения (секунды)
 @export var smoke_duration: float = 60.0
 
-var unit_type: String = "enemy_tank"
-var team: String = "enemy"
+var unit_type: String = "player_tank"
+var team: String = "player"
 var hp: int
 var alive: bool = true
-var smoking: bool = false
-var smoke_timer: float = 0.0
 var shots_fired: int = 0
 var shots_hit: int = 0
 
+# Езда
+var deployed: bool = false
+var deploy_x: float = 0.0
+
 # Стрельба
 var fire_timer: float = 0.0
-var projectile_scene: PackedScene
-var target_position: Vector2 = Vector2(100, 425)
 var projectiles_container: Node2D
+var projectile_scenes: Dictionary = {}
+var battle_manager: Node2D
 
-# Частицы дыма
+# Вспышка выстрела
+var muzzle_flash_timer: float = 0.0
+const MUZZLE_FLASH_DURATION: float = 0.2
+
+# Дым при уничтожении
+var smoking: bool = false
+var smoke_timer: float = 0.0
 var smoke_particles: Array = []
 var smoke_spawn_timer: float = 0.0
 
@@ -50,36 +60,43 @@ signal fired_projectile(proj: Node2D)
 
 func _ready() -> void:
 	hp = max_hp
-	add_to_group("enemy_tanks")
-	add_to_group("enemy_units")
+	add_to_group("player_units")
+	add_to_group("player_vehicles")
+	deploy_x = randf_range(150.0, 500.0)
 	fire_timer = randf_range(1.0, fire_interval)
 
 
-func setup_firing(proj_scene: PackedScene, target_pos: Vector2, container: Node2D) -> void:
-	projectile_scene = proj_scene
-	target_position = target_pos
-	projectiles_container = container
-
-
-func setup_battle(proj_container: Node2D, proj_scenes: Dictionary, _manager: Node2D) -> void:
-	projectile_scene = proj_scenes["shell"]
+func setup_battle(proj_container: Node2D, proj_scenes: Dictionary, manager: Node2D) -> void:
 	projectiles_container = proj_container
-	target_position = Vector2(100, 425)
+	projectile_scenes = proj_scenes
+	battle_manager = manager
 
 
 func _process(delta: float) -> void:
-	if alive:
-		position.x -= speed * delta
+	if alive and not deployed:
+		# Едем к позиции развёртывания
+		position.x += drive_speed * delta
 
-		# Стрельба — ищем ближайшую цель в зоне атаки
-		if projectile_scene and projectiles_container:
-			var best_target = _find_closest_target()
-			if best_target != Vector2.ZERO:
-				fire_timer -= delta
-				if fire_timer <= 0:
-					fire_timer = fire_interval + randf_range(-0.5, 0.5)
-					_fire_at(best_target)
+		if position.x >= deploy_x:
+			position.x = deploy_x
+			deployed = true
 
+		queue_redraw()
+
+	elif alive and deployed:
+		# Стреляем
+		var best_target = _find_closest_target()
+		if best_target != Vector2.ZERO:
+			fire_timer -= delta
+			if fire_timer <= 0:
+				fire_timer = fire_interval + randf_range(-0.5, 0.5)
+				_fire_at(best_target)
+
+		if muzzle_flash_timer > 0:
+			muzzle_flash_timer -= delta
+			queue_redraw()
+
+	# Дым при уничтожении
 	if smoking:
 		smoke_timer += delta
 		if smoke_timer >= smoke_duration:
@@ -112,14 +129,8 @@ func _find_closest_target() -> Vector2:
 	var best_pos = Vector2.ZERO
 	var best_dist = fire_range
 
-	# Проверяем мортиру (база игрока)
-	var dist_to_base = abs(target_position.x - global_position.x)
-	if dist_to_base <= fire_range:
-		best_dist = dist_to_base
-		best_pos = target_position
-
-	# Проверяем пехоту
-	for unit in get_tree().get_nodes_in_group("infantry"):
+	# Проверяем вражеские танки
+	for unit in get_tree().get_nodes_in_group("enemy_tanks"):
 		if not unit.alive:
 			continue
 		var dist = abs(unit.global_position.x - global_position.x)
@@ -127,18 +138,18 @@ func _find_closest_target() -> Vector2:
 			best_dist = dist
 			best_pos = unit.global_position
 
-	# Проверяем юниты игрока
-	for unit in get_tree().get_nodes_in_group("player_units"):
-		if not unit.alive:
+	# Проверяем вражескую пехоту
+	for unit in get_tree().get_nodes_in_group("enemy_infantry_group"):
+		if "alive" in unit and not unit.alive:
 			continue
 		var dist = abs(unit.global_position.x - global_position.x)
 		if dist < best_dist:
 			best_dist = dist
 			best_pos = unit.global_position
 
-	# Проверяем технику игрока
-	for unit in get_tree().get_nodes_in_group("player_vehicles"):
-		if not unit.alive:
+	# Проверяем общую группу врагов
+	for unit in get_tree().get_nodes_in_group("enemy_units"):
+		if "alive" in unit and not unit.alive:
 			continue
 		var dist = abs(unit.global_position.x - global_position.x)
 		if dist < best_dist:
@@ -149,33 +160,40 @@ func _find_closest_target() -> Vector2:
 
 
 func _fire_at(target_pos: Vector2) -> void:
-	var distance = abs(target_pos.x - global_position.x)
-	var gravity = 120.0  # Пониженная гравитация для пологих снарядов
+	if not projectile_scenes.has("shell") or not projectiles_container:
+		return
 
-	# Рассчитываем угол для параболической траектории
-	var power = fire_power + fire_power * randf_range(-spread_power, spread_power)
+	var distance = abs(target_pos.x - global_position.x)
+	var gravity = 120.0
+
+	# Рассчитываем параболический угол — стрельба ВПРАВО
+	var power = fire_power + randf_range(-90.0, 90.0)
 	var sin_2phi = distance * gravity / (power * power)
 	sin_2phi = clampf(sin_2phi, 0.0, 1.0)
 	var phi_deg = rad_to_deg(0.5 * asin(sin_2phi))
 
 	# Добавляем разброс
 	phi_deg += randf_range(-spread_degrees, spread_degrees)
-	phi_deg = clampf(phi_deg, 3.0, 35.0)  # Максимум 35° — танки стреляют пологo
+	phi_deg = clampf(phi_deg, 3.0, 35.0)
 
-	# Угол для стрельбы влево (180 - elevation)
-	var launch_angle = 180.0 - phi_deg
+	# Угол для стрельбы вправо (0° = вправо, elevation вверх)
+	var launch_angle = phi_deg
 
-	var proj = projectile_scene.instantiate()
-	proj.is_enemy = true
+	var shell_scene = projectile_scenes["shell"]
+	var proj = shell_scene.instantiate()
+	proj.is_enemy = false
 	# Танковые снаряды — пологие и быстрые
 	proj.gravity_force = 120.0
 	proj.air_drag = 0.08
-	proj.trail_color = Color(0.95, 0.85, 0.5)
-	proj.global_position = global_position + Vector2(-34, -16)
+	proj.trail_color = Color(0.5, 0.85, 0.5)  # Зеленоватый шлейф
+	proj.global_position = global_position + Vector2(34, -16)  # Дуло справа
 	proj.launch(launch_angle, power)
 	projectiles_container.add_child(proj)
 	fired_projectile.emit(proj)
 	shots_fired += 1
+
+	muzzle_flash_timer = MUZZLE_FLASH_DURATION
+	queue_redraw()
 
 
 func take_damage(amount: int = 1) -> void:
@@ -218,26 +236,40 @@ func _spawn_smoke() -> void:
 
 
 func _draw() -> void:
-	# Гусеницы
+	# === ГУСЕНИЦЫ (зеркало enemy_tank — те же, но танк смотрит вправо) ===
 	draw_rect(Rect2(-30, 5, 60, 12), track_color)
 	for i in range(5):
 		var wx = -24.0 + i * 12.0
 		draw_circle(Vector2(wx, 11), 4.0, Color(0.15, 0.15, 0.13) if alive else Color(0.1, 0.1, 0.08))
 		draw_circle(Vector2(wx, 11), 2.0, Color(0.25, 0.25, 0.22) if alive else Color(0.13, 0.13, 0.11))
 
-	# Корпус
+	# === КОРПУС ===
 	draw_rect(Rect2(-28, -8, 56, 16), body_color)
+	# Полоса-блик на верхней части корпуса
 	draw_rect(Rect2(-28, -8, 56, 3), Color(body_color, 0.7).lightened(0.15))
 
-	# Башня
+	# === БАШНЯ ===
 	draw_rect(Rect2(-12, -20, 24, 14), turret_color)
+	# Люк командира
 	draw_circle(Vector2(0, -14), 3.0, turret_color.darkened(0.2))
 
-	# Ствол (влево)
-	draw_rect(Rect2(-32, -16, 22, 4), turret_color.darkened(0.1))
-	draw_rect(Rect2(-34, -18, 4, 8), turret_color.darkened(0.15))
+	# === СТВОЛ (ВПРАВО — зеркало enemy_tank) ===
+	draw_rect(Rect2(10, -16, 22, 4), turret_color.darkened(0.1))
+	# Дульный тормоз
+	draw_rect(Rect2(30, -18, 4, 8), turret_color.darkened(0.15))
 
-	# Дым
+	# === ВСПЫШКА ВЫСТРЕЛА ===
+	if muzzle_flash_timer > 0 and alive:
+		var t = muzzle_flash_timer / MUZZLE_FLASH_DURATION
+		var flash_pos = Vector2(36, -14)
+		# Яркая вспышка
+		draw_circle(flash_pos, 6.0 * t, Color(1.0, 0.85, 0.3, 0.9 * t))
+		# Внешнее свечение
+		draw_circle(flash_pos, 10.0 * t, Color(1.0, 0.6, 0.15, 0.3 * t))
+		# Дым от выстрела
+		draw_circle(flash_pos + Vector2(4, -3), 4.0 * t, Color(0.6, 0.6, 0.5, 0.25 * t))
+
+	# === ДЫМ ===
 	for p in smoke_particles:
 		var t = p["age"] / p["max_age"]
 		var alpha = p["alpha"] * (1.0 - t)

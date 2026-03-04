@@ -11,9 +11,19 @@ extends Node2D
 ## Разброс угла (градусы) — tilt
 @export var spread_degrees: float = 4.0
 
+var unit_type: String = "infantry"
+var team: String = "player"
 var hp: int
 var alive: bool = true
+var shots_fired: int = 0
+var shots_hit: int = 0
 var fire_timer: float = 0.0
+
+# Ходьба
+var walk_speed: float = 30.0
+var deploy_x: float = -1.0
+var deployed: bool = false
+var walk_timer: float = 0.0  # анимация ног
 
 # Сцена ракеты и контейнер — устанавливаются из battle_manager
 var rocket_scene: PackedScene
@@ -39,13 +49,41 @@ signal fired_rocket(rocket: Node2D)
 func _ready() -> void:
 	hp = max_hp
 	add_to_group("infantry")
+	add_to_group("player_units")
 	fire_timer = 0.1
+
+	# Если заспавнен за левым краем — идёт к позиции развёртывания
+	if global_position.x < 0:
+		deploy_x = randf_range(100.0, 500.0)
+		deployed = false
+	else:
+		# Размещён вручную (infantry_placer) — сразу развёрнут
+		deployed = true
+
+
+func setup_battle(proj_container: Node2D, proj_scenes: Dictionary, _manager: Node2D) -> void:
+	projectiles_container = proj_container
+	rocket_scene = proj_scenes["rocket"]
 
 
 func _process(delta: float) -> void:
 	if not alive:
 		return
 
+	if not deployed:
+		# Идём к позиции развёртывания
+		position.x += walk_speed * delta
+		walk_timer += delta
+
+		if position.x >= deploy_x:
+			position.x = deploy_x
+			deployed = true
+			walk_timer = 0.0
+
+		queue_redraw()
+		return
+
+	# Развёрнуты — стреляем
 	fire_timer -= delta
 	if fire_timer <= 0:
 		fire_timer = fire_interval + randf_range(-0.3, 0.3)
@@ -91,6 +129,7 @@ func _try_fire() -> void:
 	rocket.launch(launch_angle)
 	projectiles_container.add_child(rocket)
 	fired_rocket.emit(rocket)
+	shots_fired += 1
 
 	muzzle_flash_timer = MUZZLE_FLASH_DURATION
 	queue_redraw()
@@ -129,6 +168,12 @@ func _die() -> void:
 
 
 func _draw() -> void:
+	if not deployed:
+		_draw_walking()
+		return
+
+	# === РАЗВЁРНУТАЯ ПОЗИЦИЯ: мешки + солдат + РПГ ===
+
 	# Центр = позиция юнита (на уровне земли)
 
 	# Мешки с песком — нижний ряд (3 мешка)
@@ -182,3 +227,32 @@ func _draw() -> void:
 		var back_pos = Vector2(-6, soldier_y + 4)
 		draw_circle(back_pos, 6.0 * t, Color(0.8, 0.6, 0.2, 0.5 * t))
 		draw_circle(back_pos + Vector2(-4, 2), 4.0 * t, Color(0.6, 0.6, 0.5, 0.3 * t))
+
+
+func _draw_walking() -> void:
+	# Идущий солдат (без мешков, ноги анимированы, несёт РПГ)
+	var bob = sin(walk_timer * 8.0) * 1.5
+
+	# Тело
+	draw_rect(Rect2(-5, -22 + bob, 10, 14), uniform_color)
+
+	# Голова
+	draw_circle(Vector2(0, -28 + bob), 5.0, skin_color)
+
+	# Каска
+	draw_arc(Vector2(0, -30 + bob), 6.0, PI, TAU, 12, helmet_color, 2.5)
+
+	# Ноги — анимация ходьбы
+	var leg_phase = sin(walk_timer * 8.0)
+	var left_foot_x = -3 + leg_phase * 4.0
+	var right_foot_x = 3 - leg_phase * 4.0
+
+	draw_line(Vector2(-2, -8 + bob), Vector2(left_foot_x, 0), uniform_color.darkened(0.15), 2.5)
+	draw_line(Vector2(2, -8 + bob), Vector2(right_foot_x, 0), uniform_color.darkened(0.15), 2.5)
+
+	# РПГ несёт на плече (диагонально вверх-вправо)
+	draw_line(Vector2(3, -16 + bob), Vector2(20, -22 + bob), rpg_color, 3.0)
+	# Раструб сзади
+	draw_line(Vector2(-4, -12 + bob), Vector2(3, -16 + bob), rpg_color, 2.5)
+	# Боеголовка на конце
+	draw_rect(Rect2(18, -25 + bob, 5, 5), Color(0.45, 0.4, 0.3))
