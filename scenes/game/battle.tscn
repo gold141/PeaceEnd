@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3 uid="uid://c1battlescene"]
+[gd_scene load_steps=18 format=3 uid="uid://c1battlescene"]
 
 [ext_resource type="Script" path="res://scripts/game/battle_manager.gd" id="1_battle"]
 [ext_resource type="Script" path="res://scripts/game/aiming_system.gd" id="2_aiming"]
@@ -12,6 +12,8 @@
 [ext_resource type="Script" path="res://scripts/game/enemy_tank.gd" id="13_tank"]
 [ext_resource type="Script" path="res://scripts/ui/action_panel.gd" id="14_action_panel"]
 [ext_resource type="Script" path="res://scripts/game/infantry_placer.gd" id="15_infantry_placer"]
+[ext_resource type="PackedScene" uid="uid://c1rocket" path="res://scenes/projectiles/rocket.tscn" id="16_rocket"]
+[ext_resource type="Script" path="res://scripts/game/range_visualizer.gd" id="17_range_vis"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_tank1"]
 size = Vector2(60, 36)
@@ -143,3 +145,6 @@ script = ExtResource("14_action_panel")
 
 [node name="InfantryPlacer" type="Node2D" parent="."]
 script = ExtResource("15_infantry_placer")
+
+[node name="RangeVisualizer" type="Node2D" parent="."]
+script = ExtResource("17_range_vis")

@@ -12,6 +12,7 @@ extends Node2D
 @onready var infantry_placer: Node2D = $InfantryPlacer
 
 var infantry_script = preload("res://scripts/game/infantry.gd")
+var rocket_scene = preload("res://scenes/projectiles/rocket.tscn")
 
 
 func _ready() -> void:
@@ -40,6 +41,10 @@ func _on_projectile_fired(_angle: float, _power: float) -> void:
 
 func _on_enemy_projectile(proj: Node2D) -> void:
 	proj.hit.connect(_on_projectile_hit)
+
+
+func _on_infantry_rocket(rocket: Node2D) -> void:
+	rocket.hit.connect(_on_projectile_hit)
 
 
 func _on_projectile_hit(pos: Vector2, body: Node2D) -> void:
@@ -82,7 +87,12 @@ func _on_infantry_placed(pos: Vector2) -> void:
 	var unit = Node2D.new()
 	unit.set_script(infantry_script)
 	unit.global_position = pos
+	# Даём пехоте ракету и контейнер
+	unit.rocket_scene = rocket_scene
+	unit.projectiles_container = projectiles
 	add_child(unit)
+	# Подключаем сигнал ракеты
+	unit.fired_rocket.connect(_on_infantry_rocket)
 	# Снимаем выделение с кнопки и разблокируем стрельбу
 	action_panel.selected_id = ""
 	action_panel.queue_redraw()

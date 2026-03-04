@@ -1,19 +1,23 @@
 # scripts/game/infantry.gd
-# Пехотный юнит — солдат за мешками с песком, автоматическая стрельба
+# Пехотный юнит — солдат за мешками с песком, стреляет ПТ-ракетами (РПГ)
 extends Node2D
 
 ## Здоровье
 @export var max_hp: int = 2
-## Дальность стрельбы (пиксели)
-@export var fire_range: float = 400.0
+## Дальность стрельбы (пиксели) — вдвое меньше танков
+@export var fire_range: float = 250.0
 ## Интервал стрельбы (секунды)
-@export var fire_interval: float = 1.5
-## Урон за выстрел
-@export var damage: int = 1
+@export var fire_interval: float = 3.5
+## Разброс угла (градусы) — tilt
+@export var spread_degrees: float = 4.0
 
 var hp: int
 var alive: bool = true
 var fire_timer: float = 0.0
+
+# Сцена ракеты и контейнер — устанавливаются из battle_manager
+var rocket_scene: PackedScene
+var projectiles_container: Node2D
 
 # Визуальные цвета
 var bag_color: Color = Color(0.6, 0.5, 0.3)
@@ -22,18 +26,20 @@ var uniform_color: Color = Color(0.3, 0.35, 0.25)
 var skin_color: Color = Color(0.55, 0.5, 0.4)
 var helmet_color: Color = Color(0.3, 0.35, 0.25)
 var weapon_color: Color = Color(0.2, 0.2, 0.18)
+var rpg_color: Color = Color(0.3, 0.32, 0.25)
 
 # Вспышка выстрела
 var muzzle_flash_timer: float = 0.0
-const MUZZLE_FLASH_DURATION: float = 0.08
+const MUZZLE_FLASH_DURATION: float = 0.15
 
 signal destroyed
+signal fired_rocket(rocket: Node2D)
 
 
 func _ready() -> void:
 	hp = max_hp
 	add_to_group("infantry")
-	fire_timer = randf_range(0.5, fire_interval)
+	fire_timer = randf_range(1.0, fire_interval)
 
 
 func _process(delta: float) -> void:
@@ -42,7 +48,7 @@ func _process(delta: float) -> void:
 
 	fire_timer -= delta
 	if fire_timer <= 0:
-		fire_timer = fire_interval + randf_range(-0.2, 0.2)
+		fire_timer = fire_interval + randf_range(-0.3, 0.3)
 		_try_fire()
 
 	if muzzle_flash_timer > 0:
@@ -51,6 +57,9 @@ func _process(delta: float) -> void:
 
 
 func _try_fire() -> void:
+	if not rocket_scene or not projectiles_container:
+		return
+
 	# Ищем ближайший танк в радиусе
 	var targets = get_tree().get_nodes_in_group("enemy_tanks")
 	var closest: Node2D = null
@@ -64,10 +73,28 @@ func _try_fire() -> void:
 			closest_dist = dist
 			closest = tank
 
-	if closest and closest.has_method("take_damage"):
-		closest.take_damage(damage)
-		muzzle_flash_timer = MUZZLE_FLASH_DURATION
-		queue_redraw()
+	if not closest:
+		return
+
+	# Рассчитываем угол к цели (пологий — РПГ летит почти горизонтально)
+	var dir = closest.global_position - global_position
+	var base_angle = rad_to_deg(atan2(-dir.y, dir.x))
+	# Слегка вверх для компенсации гравитации (5-12°)
+	var elevation = remap(closest_dist, 50.0, fire_range, 5.0, 12.0)
+	var launch_angle = base_angle + elevation
+
+	# Добавляем разброс (tilt)
+	launch_angle += randf_range(-spread_degrees, spread_degrees)
+
+	# Создаём ракету
+	var rocket = rocket_scene.instantiate()
+	rocket.global_position = global_position + Vector2(18, -30)
+	rocket.launch(launch_angle)
+	projectiles_container.add_child(rocket)
+	fired_rocket.emit(rocket)
+
+	muzzle_flash_timer = MUZZLE_FLASH_DURATION
+	queue_redraw()
 
 
 func take_damage(amount: int = 1) -> void:
@@ -94,6 +121,7 @@ func _die() -> void:
 	uniform_color = Color(0.18, 0.18, 0.16)
 	skin_color = Color(0.3, 0.28, 0.25)
 	helmet_color = Color(0.18, 0.18, 0.16)
+	rpg_color = Color(0.15, 0.15, 0.13)
 	modulate = Color.WHITE
 	queue_redraw()
 	# Удаляем через 10 секунд
@@ -138,11 +166,20 @@ func _draw() -> void:
 	# Тело
 	draw_rect(Rect2(-5, soldier_y - 2, 10, 14), uniform_color)
 
-	# Оружие (винтовка вправо — стреляет по врагам справа)
-	draw_line(Vector2(5, soldier_y), Vector2(18, soldier_y - 10), weapon_color, 2.0)
+	# РПГ (труба на плече вправо)
+	draw_line(Vector2(3, soldier_y - 2), Vector2(22, soldier_y - 8), rpg_color, 3.0)
+	# Раструб РПГ сзади
+	draw_line(Vector2(-2, soldier_y + 2), Vector2(3, soldier_y - 2), rpg_color, 2.5)
+	# Боеголовка
+	draw_rect(Rect2(20, soldier_y - 11, 5, 6), Color(0.45, 0.4, 0.3))
 
-	# Вспышка выстрела
+	# Вспышка выстрела + задний выхлоп
 	if muzzle_flash_timer > 0:
-		var flash_pos = Vector2(20, soldier_y - 12)
-		draw_circle(flash_pos, 4.0, Color(1.0, 0.9, 0.3, 0.9))
-		draw_circle(flash_pos, 2.5, Color(1.0, 1.0, 0.8, 1.0))
+		var t = muzzle_flash_timer / MUZZLE_FLASH_DURATION
+		# Передняя вспышка
+		var flash_pos = Vector2(26, soldier_y - 8)
+		draw_circle(flash_pos, 4.0 * t, Color(1.0, 0.8, 0.2, 0.9 * t))
+		# Задний выхлоп РПГ
+		var back_pos = Vector2(-6, soldier_y + 4)
+		draw_circle(back_pos, 6.0 * t, Color(0.8, 0.6, 0.2, 0.5 * t))
+		draw_circle(back_pos + Vector2(-4, 2), 4.0 * t, Color(0.6, 0.6, 0.5, 0.3 * t))

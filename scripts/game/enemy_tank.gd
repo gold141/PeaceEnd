@@ -11,8 +11,10 @@ extends StaticBody2D
 @export var spread_degrees: float = 6.0
 ## Разброс силы (процент)
 @export var spread_power: float = 0.1
-## Сила выстрела
-@export var fire_power: float = 650.0
+## Сила выстрела (px/s — высокая для пологих снарядов)
+@export var fire_power: float = 900.0
+## Дальность атаки для визуализации (px)
+@export var fire_range: float = 500.0
 ## Цвет корпуса
 @export var body_color: Color = Color(0.35, 0.4, 0.3)
 ## Цвет гусениц
@@ -94,9 +96,9 @@ func _process(delta: float) -> void:
 
 func _fire() -> void:
 	var distance = abs(target_position.x - global_position.x)
-	var gravity = 245.0
+	var gravity = 120.0  # Пониженная гравитация для пологих снарядов
 
-	# Рассчитываем угол для параболической траектории (без учёта сопротивления)
+	# Рассчитываем угол для параболической траектории
 	var power = fire_power + fire_power * randf_range(-spread_power, spread_power)
 	var sin_2phi = distance * gravity / (power * power)
 	sin_2phi = clampf(sin_2phi, 0.0, 1.0)
@@ -104,13 +106,17 @@ func _fire() -> void:
 
 	# Добавляем разброс
 	phi_deg += randf_range(-spread_degrees, spread_degrees)
-	phi_deg = clampf(phi_deg, 5.0, 80.0)
+	phi_deg = clampf(phi_deg, 3.0, 35.0)  # Максимум 35° — танки стреляют пологo
 
 	# Угол для стрельбы влево (180 - elevation)
 	var launch_angle = 180.0 - phi_deg
 
 	var proj = projectile_scene.instantiate()
 	proj.is_enemy = true
+	# Танковые снаряды — пологие и быстрые
+	proj.gravity_force = 120.0
+	proj.air_drag = 0.08
+	proj.trail_color = Color(0.95, 0.85, 0.5)
 	proj.global_position = global_position + Vector2(-34, -16)
 	proj.launch(launch_angle, power)
 	projectiles_container.add_child(proj)
