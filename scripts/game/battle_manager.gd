@@ -227,10 +227,11 @@ func _on_projectile_hit(pos: Vector2, body: Node2D) -> void:
 
 
 func _apply_blast_damage(pos: Vector2, radius: float, exclude: Node2D) -> void:
+	var damaged: Array = []  # Избегаем двойного урона от перекрёстных групп
 	var all_groups = ["infantry", "player_units", "enemy_infantry_group", "air_units"]
 	for group_name in all_groups:
 		for unit in get_tree().get_nodes_in_group(group_name):
-			if unit == exclude:
+			if unit == exclude or unit in damaged:
 				continue
 			if not unit.has_method("take_damage"):
 				continue
@@ -238,6 +239,7 @@ func _apply_blast_damage(pos: Vector2, radius: float, exclude: Node2D) -> void:
 				continue
 			if unit.global_position.distance_to(pos) <= radius:
 				unit.take_damage(1)
+				damaged.append(unit)
 
 
 func _on_unit_destroyed(unit: Node2D, unit_type: String, team: String) -> void:

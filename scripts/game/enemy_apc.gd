@@ -81,7 +81,7 @@ func _process(delta: float) -> void:
 				# Высадка пехоты при прибытии
 				if not infantry_spawned:
 					infantry_spawned = true
-					var spawn_pos = [global_position + Vector2(-20, 18), global_position + Vector2(20, 18)]
+					var spawn_pos = [global_position + Vector2(-20, 2), global_position + Vector2(20, 2)]
 					spawn_units.emit("enemy_infantry", spawn_pos, "enemy")
 
 		# Стрельба из пулемёта
@@ -210,7 +210,7 @@ func _die() -> void:
 	# Высадка пехоты при уничтожении (если ещё не высадили)
 	if not infantry_spawned:
 		infantry_spawned = true
-		var spawn_pos = [global_position + Vector2(-20, 18), global_position + Vector2(20, 18)]
+		var spawn_pos = [global_position + Vector2(-20, 2), global_position + Vector2(20, 2)]
 		spawn_units.emit("enemy_infantry", spawn_pos, "enemy")
 
 	# Серые руины

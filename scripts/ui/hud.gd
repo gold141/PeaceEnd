@@ -116,13 +116,20 @@ func _process(_delta: float) -> void:
 func _print_battle_stats() -> void:
 	print("=== BATTLE STATISTICS ===")
 
-	# Player units
-	var player_units = get_tree().get_nodes_in_group("player_units") + get_tree().get_nodes_in_group("infantry")
-	var player_vehicles = get_tree().get_nodes_in_group("player_vehicles")
-	print("Player units (foot): %d" % player_units.size())
-	print("Player vehicles: %d" % player_vehicles.size())
+	# Player units (дедупликация — юниты могут быть в нескольких группах)
+	var player_set: Array = []
+	for unit in get_tree().get_nodes_in_group("player_units"):
+		if unit not in player_set:
+			player_set.append(unit)
+	for unit in get_tree().get_nodes_in_group("infantry"):
+		if unit not in player_set:
+			player_set.append(unit)
+	for unit in get_tree().get_nodes_in_group("player_vehicles"):
+		if unit not in player_set:
+			player_set.append(unit)
+	print("Player units: %d" % player_set.size())
 
-	for unit in player_units:
+	for unit in player_set:
 		if "unit_type" in unit and "alive" in unit:
 			var status = "ALIVE" if unit.alive else "DEAD"
 			var hp_str = ""
@@ -135,11 +142,23 @@ func _print_battle_stats() -> void:
 				shots_str += " Hits:%d" % unit.shots_hit
 			print("  %s [%s]%s%s" % [unit.unit_type, status, hp_str, shots_str])
 
-	# Enemy units
-	var enemy_units = get_tree().get_nodes_in_group("enemy_units") + get_tree().get_nodes_in_group("enemy_tanks")
-	print("Enemy units: %d" % enemy_units.size())
+	# Enemy units (дедупликация)
+	var enemy_set: Array = []
+	for unit in get_tree().get_nodes_in_group("enemy_units"):
+		if unit not in enemy_set:
+			enemy_set.append(unit)
+	for unit in get_tree().get_nodes_in_group("enemy_tanks"):
+		if unit not in enemy_set:
+			enemy_set.append(unit)
+	for unit in get_tree().get_nodes_in_group("enemy_infantry_group"):
+		if unit not in enemy_set:
+			enemy_set.append(unit)
+	for unit in get_tree().get_nodes_in_group("air_units"):
+		if unit not in enemy_set:
+			enemy_set.append(unit)
+	print("Enemy units: %d" % enemy_set.size())
 
-	for unit in enemy_units:
+	for unit in enemy_set:
 		if "unit_type" in unit and "alive" in unit:
 			var status = "ALIVE" if unit.alive else "DEAD"
 			var hp_str = ""
