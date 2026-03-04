@@ -187,8 +187,11 @@ func _find_impact_target() -> Node2D:
 
 func _apply_blast_damage() -> void:
 	# Осколочный урон 1 в радиусе blast_radius (исключая прямое попадание)
+	var damaged: Array = []
 	for group_name in ["infantry", "player_units", "player_vehicles"]:
 		for unit in get_tree().get_nodes_in_group(group_name):
+			if unit in damaged:
+				continue
 			if "alive" in unit and not unit.alive:
 				continue
 			if not unit.has_method("take_damage"):
@@ -196,6 +199,7 @@ func _apply_blast_damage() -> void:
 			var dist = global_position.distance_to(unit.global_position)
 			if dist <= blast_radius and dist > impact_radius * 0.5:
 				unit.take_damage(1)
+				damaged.append(unit)
 
 
 func _check_aa_hits() -> void:
