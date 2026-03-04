@@ -5,9 +5,9 @@ extends Node2D
 ## Ширина террейна
 @export var terrain_width: int = 1280
 ## Высота террейна
-@export var terrain_height: int = 105
+@export var terrain_height: int = 70
 ## Позиция верха террейна (Y)
-@export var terrain_top_y: float = 615.0
+@export var terrain_top_y: float = 450.0
 ## Цвет земли
 @export var ground_color: Color = Color(0.25, 0.18, 0.1)
 ## Цвет травы

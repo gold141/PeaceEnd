@@ -25,6 +25,8 @@ var launch_power: float = 500.0
 var current_angle: float = 45.0
 var can_fire: bool = true
 var reload_timer: float = 0.0
+## Блокировка стрельбы (режим размещения юнитов)
+var input_blocked: bool = false
 
 # Следы прицелов после выстрелов (макс 2), храним локальные позиции
 var ghost_crosshairs: Array[Vector2] = []
@@ -56,12 +58,26 @@ func _process(delta: float) -> void:
 			can_fire = true
 
 	_update_aim_from_mouse()
+
+	# Показываем/скрываем курсор в зависимости от зоны
+	var mouse_y = get_global_mouse_position().y
+	if mouse_y > 520 or input_blocked:
+		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+	else:
+		Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
+
 	queue_redraw()
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if input_blocked:
+		return
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+			# Не стреляем если курсор ниже игровой зоны (в панели действий)
+			var mouse_y = get_global_mouse_position().y
+			if mouse_y > 520:
+				return
 			_fire()
 	elif event is InputEventKey and event.pressed:
 		if event.keycode == KEY_1:

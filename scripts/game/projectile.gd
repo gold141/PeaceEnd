@@ -67,7 +67,7 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 	# Удаление за экраном
-	if position.y > 800 or position.x > 1400 or position.x < -100:
+	if position.y > 600 or position.x > 1400 or position.x < -100:
 		off_screen.emit()
 		queue_free()
 

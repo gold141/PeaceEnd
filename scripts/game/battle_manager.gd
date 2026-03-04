@@ -8,12 +8,23 @@ extends Node2D
 @onready var aiming_system: Node2D = $AimingSystem
 @onready var projectiles: Node2D = $Projectiles
 @onready var hud: CanvasLayer = $HUD
+@onready var action_panel: Control = $HUD/ActionPanel
+@onready var infantry_placer: Node2D = $InfantryPlacer
+
+var infantry_script = preload("res://scripts/game/infantry.gd")
 
 
 func _ready() -> void:
 	aiming_system.projectiles_container = projectiles
 	aiming_system.fired.connect(_on_projectile_fired)
 	hud.setup(aiming_system)
+
+	# Панель действий
+	action_panel.unit_selected.connect(_on_unit_selected)
+	action_panel.unit_deselected.connect(_on_unit_deselected)
+
+	# Система размещения пехоты
+	infantry_placer.infantry_placed.connect(_on_infantry_placed)
 
 	# Настраиваем танки
 	for tank in get_tree().get_nodes_in_group("enemy_tanks"):
@@ -54,6 +65,28 @@ func _on_projectile_hit(pos: Vector2, body: Node2D) -> void:
 	# Урон танку
 	if hit_tank and body.has_method("take_damage"):
 		body.take_damage()
+
+
+func _on_unit_selected(unit_id: String) -> void:
+	if unit_id == "infantry":
+		infantry_placer.start_placing()
+		aiming_system.input_blocked = true
+
+
+func _on_unit_deselected() -> void:
+	infantry_placer.stop_placing()
+	aiming_system.input_blocked = false
+
+
+func _on_infantry_placed(pos: Vector2) -> void:
+	var unit = Node2D.new()
+	unit.set_script(infantry_script)
+	unit.global_position = pos
+	add_child(unit)
+	# Снимаем выделение с кнопки и разблокируем стрельбу
+	action_panel.selected_id = ""
+	action_panel.queue_redraw()
+	aiming_system.input_blocked = false
 
 
 func _on_tank_destroyed(tank: Node2D) -> void:
