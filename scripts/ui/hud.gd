@@ -9,8 +9,11 @@ extends CanvasLayer
 	$ChargePanel/Charge2,
 	$ChargePanel/Charge3,
 ]
+@onready var money_label: Label = $MoneyLabel
+@onready var speed_label: Label = $SpeedLabel
 
 var aiming_system: Node2D
+var economy: Node
 
 const CHARGE_LABELS = ["1", "2", "3"]
 const CHARGE_COLORS_ACTIVE = [
@@ -20,9 +23,15 @@ const CHARGE_COLORS_ACTIVE = [
 ]
 const CHARGE_COLOR_INACTIVE = Color(0.25, 0.25, 0.25)
 
+# Ускорение времени
+var time_scale: float = 1.0
+const TIME_SCALES = [1.0, 2.0, 4.0, 8.0]
+var time_scale_index: int = 0
 
-func setup(aim_sys: Node2D) -> void:
+
+func setup(aim_sys: Node2D, econ: Node = null) -> void:
 	aiming_system = aim_sys
+	economy = econ
 	aiming_system.charge_changed.connect(_on_charge_changed)
 
 	for i in range(charge_buttons.size()):
@@ -68,6 +77,18 @@ func _make_stylebox(color: Color) -> StyleBoxFlat:
 	return sb
 
 
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed:
+		# F — ускорение/замедление времени
+		if event.keycode == KEY_F:
+			time_scale_index = (time_scale_index + 1) % TIME_SCALES.size()
+			time_scale = TIME_SCALES[time_scale_index]
+			Engine.time_scale = time_scale
+		# P — вывод статистики в консоль
+		elif event.keycode == KEY_P:
+			_print_battle_stats()
+
+
 func _process(_delta: float) -> void:
 	if not aiming_system:
 		return
@@ -80,3 +101,59 @@ func _process(_delta: float) -> void:
 	else:
 		var progress = (1.0 - aiming_system.reload_timer / aiming_system.reload_time) * 100
 		reload_bar.value = progress
+
+	if economy:
+		money_label.text = "$%d  (+%d/s)" % [economy.player_money, int(economy.player_income)]
+
+	if time_scale != 1.0:
+		speed_label.text = "x%d [F]" % int(time_scale)
+		speed_label.visible = true
+	else:
+		speed_label.text = "x1 [F]"
+		speed_label.visible = true
+
+
+func _print_battle_stats() -> void:
+	print("=== BATTLE STATISTICS ===")
+
+	# Player units
+	var player_units = get_tree().get_nodes_in_group("player_units") + get_tree().get_nodes_in_group("infantry")
+	var player_vehicles = get_tree().get_nodes_in_group("player_vehicles")
+	print("Player units (foot): %d" % player_units.size())
+	print("Player vehicles: %d" % player_vehicles.size())
+
+	for unit in player_units:
+		if "unit_type" in unit and "alive" in unit:
+			var status = "ALIVE" if unit.alive else "DEAD"
+			var hp_str = ""
+			if "hp" in unit and "max_hp" in unit:
+				hp_str = " HP:%d/%d" % [unit.hp, unit.max_hp]
+			var shots_str = ""
+			if "shots_fired" in unit:
+				shots_str = " Shots:%d" % unit.shots_fired
+			if "shots_hit" in unit:
+				shots_str += " Hits:%d" % unit.shots_hit
+			print("  %s [%s]%s%s" % [unit.unit_type, status, hp_str, shots_str])
+
+	# Enemy units
+	var enemy_units = get_tree().get_nodes_in_group("enemy_units") + get_tree().get_nodes_in_group("enemy_tanks")
+	print("Enemy units: %d" % enemy_units.size())
+
+	for unit in enemy_units:
+		if "unit_type" in unit and "alive" in unit:
+			var status = "ALIVE" if unit.alive else "DEAD"
+			var hp_str = ""
+			if "hp" in unit and "max_hp" in unit:
+				hp_str = " HP:%d/%d" % [unit.hp, unit.max_hp]
+			var shots_str = ""
+			if "shots_fired" in unit:
+				shots_str = " Shots:%d" % unit.shots_fired
+			if "shots_hit" in unit:
+				shots_str += " Hits:%d" % unit.shots_hit
+			print("  %s [%s]%s%s" % [unit.unit_type, status, hp_str, shots_str])
+
+	# Economy
+	if economy:
+		print("Player money: $%d" % economy.player_money)
+		print("Enemy money: $%d" % economy.enemy_money)
+	print("=========================")
