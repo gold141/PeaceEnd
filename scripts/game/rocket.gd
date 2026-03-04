@@ -105,12 +105,18 @@ func _draw() -> void:
 	draw_line(Vector2(-6, -1.5), Vector2(-8, -4), Color(0.3, 0.3, 0.28), 1.5)
 	draw_line(Vector2(-6, 1.5), Vector2(-8, 4), Color(0.3, 0.3, 0.28), 1.5)
 
+	# Огонёк на голове ракеты (всегда в полёте)
+	var head_flicker = randf_range(0.6, 1.0)
+	draw_circle(Vector2(8, 0), 2.5 * head_flicker, Color(1.0, 0.5, 0.15, 0.9))
+	draw_circle(Vector2(9, 0), 1.5 * head_flicker, Color(1.0, 0.85, 0.4, 0.8))
+
 	# Огонь двигателя (фаза 2)
 	var engine_on = flight_time >= booster_duration and flight_time < booster_duration + sustainer_duration
 	if engine_on:
 		var flicker = randf_range(0.7, 1.0)
-		draw_circle(Vector2(-8, 0), 3.0 * flicker, flame_color)
-		draw_circle(Vector2(-10, 0), 2.0 * flicker, Color(1.0, 0.9, 0.4, 0.8))
+		draw_circle(Vector2(-8, 0), 3.5 * flicker, flame_color)
+		draw_circle(Vector2(-11, 0), 2.5 * flicker, Color(1.0, 0.9, 0.4, 0.8))
+		draw_circle(Vector2(-14, 0), 1.5 * flicker, Color(0.9, 0.7, 0.3, 0.5))
 
 	# Шлейф дыма
 	var count = trail_points.size()

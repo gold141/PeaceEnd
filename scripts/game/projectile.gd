@@ -73,6 +73,10 @@ func _process(delta: float) -> void:
 
 
 func _draw() -> void:
+	# Тело снаряда
+	draw_rect(Rect2(-4, -1.5, 8, 3), Color(0.4, 0.38, 0.3))
+	draw_rect(Rect2(4, -1, 3, 2), Color(0.55, 0.5, 0.4))
+
 	var count = trail_points.size()
 	if count < 2:
 		return

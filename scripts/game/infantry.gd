@@ -39,7 +39,7 @@ signal fired_rocket(rocket: Node2D)
 func _ready() -> void:
 	hp = max_hp
 	add_to_group("infantry")
-	fire_timer = randf_range(1.0, fire_interval)
+	fire_timer = randf_range(0.2, 0.8)
 
 
 func _process(delta: float) -> void:
@@ -76,15 +76,14 @@ func _try_fire() -> void:
 	if not closest:
 		return
 
-	# Рассчитываем угол к цели (пологий — РПГ летит почти горизонтально)
-	var dir = closest.global_position - global_position
-	var base_angle = rad_to_deg(atan2(-dir.y, dir.x))
-	# Слегка вверх для компенсации гравитации (5-12°)
-	var elevation = remap(closest_dist, 50.0, fire_range, 5.0, 12.0)
-	var launch_angle = base_angle + elevation
+	# РПГ целится почти прямо в танк — минимальный подъём для компенсации гравитации
+	# Чем дальше цель, тем чуть выше (но максимум 5°)
+	var elevation = remap(closest_dist, 50.0, fire_range, 1.0, 5.0)
+	var launch_angle = elevation
 
 	# Добавляем разброс (tilt)
 	launch_angle += randf_range(-spread_degrees, spread_degrees)
+	launch_angle = clampf(launch_angle, -3.0, 8.0)
 
 	# Создаём ракету
 	var rocket = rocket_scene.instantiate()
