@@ -59,12 +59,14 @@ func _process(delta: float) -> void:
 	if alive:
 		position.x -= speed * delta
 
-		# Стрельба
+		# Стрельба — ищем ближайшую цель в зоне атаки
 		if projectile_scene and projectiles_container:
-			fire_timer -= delta
-			if fire_timer <= 0:
-				fire_timer = fire_interval + randf_range(-0.5, 0.5)
-				_fire()
+			var best_target = _find_closest_target()
+			if best_target != Vector2.ZERO:
+				fire_timer -= delta
+				if fire_timer <= 0:
+					fire_timer = fire_interval + randf_range(-0.5, 0.5)
+					_fire_at(best_target)
 
 	if smoking:
 		smoke_timer += delta
@@ -94,8 +96,30 @@ func _process(delta: float) -> void:
 		queue_redraw()
 
 
-func _fire() -> void:
-	var distance = abs(target_position.x - global_position.x)
+func _find_closest_target() -> Vector2:
+	var best_pos = Vector2.ZERO
+	var best_dist = fire_range
+
+	# Проверяем мортиру (база игрока)
+	var dist_to_base = abs(target_position.x - global_position.x)
+	if dist_to_base <= fire_range:
+		best_dist = dist_to_base
+		best_pos = target_position
+
+	# Проверяем пехоту
+	for unit in get_tree().get_nodes_in_group("infantry"):
+		if not unit.alive:
+			continue
+		var dist = abs(unit.global_position.x - global_position.x)
+		if dist < best_dist:
+			best_dist = dist
+			best_pos = unit.global_position
+
+	return best_pos
+
+
+func _fire_at(target_pos: Vector2) -> void:
+	var distance = abs(target_pos.x - global_position.x)
 	var gravity = 120.0  # Пониженная гравитация для пологих снарядов
 
 	# Рассчитываем угол для параболической траектории

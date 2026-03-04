@@ -6,15 +6,15 @@
 extends Area2D
 
 ## Начальная скорость вышибного заряда (px/s)
-@export var booster_speed: float = 150.0
+@export var booster_speed: float = 200.0
 ## Время вышибной фазы (секунды)
 @export var booster_duration: float = 0.12
 ## Ускорение маршевого двигателя (px/s²)
-@export var sustainer_accel: float = 450.0
+@export var sustainer_accel: float = 550.0
 ## Время работы маршевого двигателя (секунды)
 @export var sustainer_duration: float = 0.5
 ## Максимальная скорость ракеты (px/s)
-@export var max_speed: float = 380.0
+@export var max_speed: float = 450.0
 ## Гравитация (слабая — ракета пологая)
 @export var gravity_force: float = 80.0
 ## Сопротивление воздуха (слабое для ракеты)
@@ -31,9 +31,9 @@ var direction: Vector2 = Vector2.RIGHT
 
 # Шлейф
 var trail_points: Array = []
-const TRAIL_LENGTH: int = 30
-const TRAIL_LIFETIME: float = 0.6
-const TRAIL_MAX_WIDTH: float = 2.5
+const TRAIL_LENGTH: int = 45
+const TRAIL_LIFETIME: float = 1.0
+const TRAIL_MAX_WIDTH: float = 3.0
 
 signal hit(position: Vector2, body: Node2D)
 signal off_screen()
@@ -74,11 +74,10 @@ func _process(delta: float) -> void:
 	position += velocity * delta
 	rotation = velocity.angle()
 
-	# Шлейф (только когда двигатель работает или недавно)
-	if flight_time < booster_duration + sustainer_duration + 0.3:
-		trail_points.append({"pos": global_position, "age": 0.0})
-		if trail_points.size() > TRAIL_LENGTH:
-			trail_points.pop_front()
+	# Шлейф — на всём протяжении полёта
+	trail_points.append({"pos": global_position, "age": 0.0})
+	if trail_points.size() > TRAIL_LENGTH:
+		trail_points.pop_front()
 
 	var i = 0
 	while i < trail_points.size():
@@ -97,26 +96,21 @@ func _process(delta: float) -> void:
 
 
 func _draw() -> void:
-	# Тело ракеты
-	draw_rect(Rect2(-6, -1.5, 10, 3), Color(0.35, 0.38, 0.3))
-	# Головка (боевая часть)
-	draw_rect(Rect2(4, -2, 4, 4), Color(0.5, 0.45, 0.35))
-	# Стабилизаторы
-	draw_line(Vector2(-6, -1.5), Vector2(-8, -4), Color(0.3, 0.3, 0.28), 1.5)
-	draw_line(Vector2(-6, 1.5), Vector2(-8, 4), Color(0.3, 0.3, 0.28), 1.5)
+	# Тело ракеты (маленькое)
+	draw_rect(Rect2(-3, -0.5, 5, 1), Color(0.35, 0.38, 0.3))
+	# Головка
+	draw_circle(Vector2(3, 0), 1.0, Color(0.5, 0.45, 0.35))
 
-	# Огонёк на голове ракеты (всегда в полёте)
+	# Огонёк на голове (маленький)
 	var head_flicker = randf_range(0.6, 1.0)
-	draw_circle(Vector2(8, 0), 2.5 * head_flicker, Color(1.0, 0.5, 0.15, 0.9))
-	draw_circle(Vector2(9, 0), 1.5 * head_flicker, Color(1.0, 0.85, 0.4, 0.8))
+	draw_circle(Vector2(4, 0), 1.5 * head_flicker, Color(1.0, 0.5, 0.15, 0.9))
 
 	# Огонь двигателя (фаза 2)
 	var engine_on = flight_time >= booster_duration and flight_time < booster_duration + sustainer_duration
 	if engine_on:
 		var flicker = randf_range(0.7, 1.0)
-		draw_circle(Vector2(-8, 0), 3.5 * flicker, flame_color)
-		draw_circle(Vector2(-11, 0), 2.5 * flicker, Color(1.0, 0.9, 0.4, 0.8))
-		draw_circle(Vector2(-14, 0), 1.5 * flicker, Color(0.9, 0.7, 0.3, 0.5))
+		draw_circle(Vector2(-4, 0), 2.0 * flicker, flame_color)
+		draw_circle(Vector2(-6, 0), 1.5 * flicker, Color(1.0, 0.9, 0.4, 0.8))
 
 	# Шлейф дыма
 	var count = trail_points.size()

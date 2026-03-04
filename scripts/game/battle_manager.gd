@@ -71,6 +71,14 @@ func _on_projectile_hit(pos: Vector2, body: Node2D) -> void:
 	if hit_tank and body.has_method("take_damage"):
 		body.take_damage()
 
+	# Осколочный урон пехоте в радиусе взрыва
+	var blast_radius = 45.0
+	for unit in get_tree().get_nodes_in_group("infantry"):
+		if not unit.alive:
+			continue
+		if unit.global_position.distance_to(pos) <= blast_radius:
+			unit.take_damage()
+
 
 func _on_unit_selected(unit_id: String) -> void:
 	if unit_id == "infantry":

@@ -4,8 +4,8 @@ extends Node2D
 
 ## Здоровье
 @export var max_hp: int = 2
-## Дальность стрельбы (пиксели) — вдвое меньше танков
-@export var fire_range: float = 250.0
+## Дальность стрельбы (пиксели)
+@export var fire_range: float = 300.0
 ## Интервал стрельбы (секунды)
 @export var fire_interval: float = 3.5
 ## Разброс угла (градусы) — tilt
@@ -39,7 +39,7 @@ signal fired_rocket(rocket: Node2D)
 func _ready() -> void:
 	hp = max_hp
 	add_to_group("infantry")
-	fire_timer = randf_range(0.2, 0.8)
+	fire_timer = 0.1
 
 
 func _process(delta: float) -> void:
@@ -78,7 +78,7 @@ func _try_fire() -> void:
 
 	# РПГ целится почти прямо в танк — минимальный подъём для компенсации гравитации
 	# Чем дальше цель, тем чуть выше (но максимум 5°)
-	var elevation = remap(closest_dist, 50.0, fire_range, 1.0, 5.0)
+	var elevation = remap(closest_dist, 50.0, fire_range, 1.0, 6.0)
 	var launch_angle = elevation
 
 	# Добавляем разброс (tilt)
