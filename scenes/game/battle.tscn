@@ -1,20 +1,30 @@
-[gd_scene load_steps=9 format=3 uid="uid://c1battlescene"]
+[gd_scene load_steps=13 format=3 uid="uid://c1battlescene"]
 
 [ext_resource type="Script" path="res://scripts/game/battle_manager.gd" id="1_battle"]
 [ext_resource type="Script" path="res://scripts/game/aiming_system.gd" id="2_aiming"]
 [ext_resource type="PackedScene" uid="uid://c1projectile" path="res://scenes/projectiles/projectile.tscn" id="3_projectile"]
 [ext_resource type="Script" path="res://scripts/ui/hud.gd" id="4_hud"]
-[ext_resource type="Texture2D" path="res://assets/sprites/mortar.png" id="6_mortar"]
-[ext_resource type="Texture2D" path="res://assets/sprites/enemy_bunker.png" id="7_bunker"]
+[ext_resource type="PackedScene" uid="uid://c1explosion" path="res://scenes/effects/explosion.tscn" id="8_explosion"]
+[ext_resource type="AudioStream" path="res://assets/sounds/shot.wav" id="9_shoot"]
+[ext_resource type="PackedScene" uid="uid://c1crater" path="res://scenes/effects/crater.tscn" id="10_crater"]
+[ext_resource type="PackedScene" uid="uid://c1dirtburst" path="res://scenes/effects/dirt_burst.tscn" id="11_dirt"]
+[ext_resource type="Script" path="res://scripts/game/destructible_terrain.gd" id="12_terrain"]
+[ext_resource type="Script" path="res://scripts/game/enemy_tank.gd" id="13_tank"]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_ground"]
-size = Vector2(1280, 100)
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_tank1"]
+size = Vector2(60, 36)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_target"]
-size = Vector2(60, 80)
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_tank2"]
+size = Vector2(60, 36)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_tank3"]
+size = Vector2(60, 36)
 
 [node name="Battle" type="Node2D"]
 script = ExtResource("1_battle")
+explosion_scene = ExtResource("8_explosion")
+crater_scene = ExtResource("10_crater")
+dirt_burst_scene = ExtResource("11_dirt")
 
 [node name="Background" type="ColorRect" parent="."]
 offset_right = 1280.0
@@ -22,54 +32,47 @@ offset_bottom = 720.0
 color = Color(0.45, 0.65, 0.82, 1)
 mouse_filter = 2
 
-[node name="GroundVisual" type="ColorRect" parent="."]
-offset_left = 0.0
-offset_top = 620.0
-offset_right = 1280.0
-offset_bottom = 720.0
-color = Color(0.25, 0.18, 0.1, 1)
-mouse_filter = 2
-
-[node name="GrassLine" type="ColorRect" parent="."]
-offset_left = 0.0
-offset_top = 615.0
-offset_right = 1280.0
-offset_bottom = 625.0
-color = Color(0.2, 0.35, 0.1, 1)
-mouse_filter = 2
-
-[node name="Ground" type="StaticBody2D" parent="."]
-collision_layer = 1
-collision_mask = 2
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Ground"]
-position = Vector2(640, 670)
-shape = SubResource("RectangleShape2D_ground")
+[node name="Terrain" type="Node2D" parent="."]
+script = ExtResource("12_terrain")
 
 [node name="AimingSystem" type="Node2D" parent="."]
-position = Vector2(100, 610)
+position = Vector2(100, 590)
 script = ExtResource("2_aiming")
 projectile_scene = ExtResource("3_projectile")
 
-[node name="MortarSprite" type="Sprite2D" parent="."]
-position = Vector2(100, 590)
-scale = Vector2(0.12, 0.12)
-texture = ExtResource("6_mortar")
+[node name="ShootSound" type="AudioStreamPlayer" parent="AimingSystem"]
+stream = ExtResource("9_shoot")
 
 [node name="Projectiles" type="Node2D" parent="."]
 
-[node name="TargetDummy" type="StaticBody2D" parent="."]
+[node name="EnemyTank1" type="StaticBody2D" parent="."]
+position = Vector2(900, 597)
 collision_layer = 1
 collision_mask = 2
+script = ExtResource("13_tank")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="TargetDummy"]
-position = Vector2(900, 575)
-shape = SubResource("RectangleShape2D_target")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="EnemyTank1"]
+shape = SubResource("RectangleShape2D_tank1")
 
-[node name="TargetSprite" type="Sprite2D" parent="TargetDummy"]
-position = Vector2(900, 575)
-scale = Vector2(0.12, 0.12)
-texture = ExtResource("7_bunker")
+[node name="EnemyTank2" type="StaticBody2D" parent="."]
+position = Vector2(1100, 597)
+collision_layer = 1
+collision_mask = 2
+script = ExtResource("13_tank")
+speed = 15.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="EnemyTank2"]
+shape = SubResource("RectangleShape2D_tank2")
+
+[node name="EnemyTank3" type="StaticBody2D" parent="."]
+position = Vector2(1300, 597)
+collision_layer = 1
+collision_mask = 2
+script = ExtResource("13_tank")
+speed = 25.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="EnemyTank3"]
+shape = SubResource("RectangleShape2D_tank3")
 
 [node name="HUD" type="CanvasLayer" parent="."]
 script = ExtResource("4_hud")

@@ -16,7 +16,7 @@ var launch_power: float = 500.0
 ## Перезарядка (секунды)
 @export var reload_time: float = 2.0
 ## Минимальный угол (от горизонтали вверх)
-@export var min_angle: float = 5.0
+@export var min_angle: float = 15.0
 ## Максимальный угол
 @export var max_angle: float = 85.0
 ## Размер прицела (пиксели)
@@ -35,6 +35,8 @@ const MAX_GHOSTS: int = 2
 
 signal fired(angle: float, power: float)
 signal charge_changed(charge: int)
+
+@onready var shoot_sound: AudioStreamPlayer = $ShootSound
 
 
 func _ready() -> void:
@@ -94,6 +96,7 @@ func _fire() -> void:
 		proj.global_position = global_position
 		proj.launch(current_angle, launch_power)
 		projectiles_container.add_child(proj)
+		shoot_sound.play()
 
 		fired.emit(current_angle, launch_power)
 
@@ -102,6 +105,20 @@ func _fire() -> void:
 
 
 func _draw() -> void:
+	# Миномёт: ствол поворачивается по углу прицеливания
+	var angle_rad = deg_to_rad(current_angle)
+	var barrel_len = 22.0
+	var barrel_end = Vector2(cos(angle_rad), -sin(angle_rad)) * barrel_len
+	# Ствол
+	draw_line(Vector2.ZERO, barrel_end, Color(0.3, 0.3, 0.28), 4.0)
+	# Дульный срез
+	draw_circle(barrel_end, 3.0, Color(0.25, 0.25, 0.22))
+	# Опорная плита
+	draw_rect(Rect2(-10, 0, 20, 8), Color(0.35, 0.35, 0.3))
+	# Ноги
+	draw_line(Vector2(-8, 2), Vector2(-16, 14), Color(0.3, 0.3, 0.28), 2.0)
+	draw_line(Vector2(8, 2), Vector2(16, 14), Color(0.3, 0.3, 0.28), 2.0)
+
 	var s = crosshair_size
 
 	# Рисуем призрачные прицелы (старые выстрелы)

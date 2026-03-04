@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://c1crater"]
+
+[ext_resource type="Script" path="res://scripts/game/crater.gd" id="1_script"]
+
+[node name="Crater" type="Node2D"]
+script = ExtResource("1_script")
