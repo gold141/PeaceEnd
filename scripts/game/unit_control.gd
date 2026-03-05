@@ -155,9 +155,6 @@ func _find_player_unit_at_mouse() -> Node2D:
 				continue
 			if "team" in unit and unit.team != "player":
 				continue
-			if "deployed" in unit and not unit.deployed:
-				continue
-
 			var offset = Vector2(0, -15) if unit.global_position.y > 400 else Vector2.ZERO
 			var dist = mouse.distance_to(unit.global_position + offset)
 			if dist < best_dist:
@@ -173,6 +170,9 @@ func _select_unit(unit: Node2D) -> void:
 
 	controlled_unit = unit
 	controlled_unit.manually_controlled = true
+	# Force deploy if unit is still walking/driving
+	if "deployed" in controlled_unit and not controlled_unit.deployed:
+		controlled_unit.deployed = true
 	active = true
 	aiming_system.input_blocked = true
 	outline_pulse = 0.0
@@ -198,6 +198,8 @@ func _switch_to_unit(new_unit: Node2D) -> void:
 
 	controlled_unit = new_unit
 	controlled_unit.manually_controlled = true
+	if "deployed" in controlled_unit and not controlled_unit.deployed:
+		controlled_unit.deployed = true
 	outline_pulse = 0.0
 
 	unit_selected.emit(new_unit)
