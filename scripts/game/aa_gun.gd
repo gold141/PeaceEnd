@@ -40,7 +40,8 @@ var muzzle_flash_timer: float = 0.0
 const MUZZLE_FLASH_DURATION: float = 0.08
 var manually_controlled: bool = false
 var can_move: bool = false  # AA Gun is stationary
-
+var min_fire_angle: float = -10.0
+var max_fire_angle: float = 170.0
 signal destroyed
 signal fired_bullet(proj: Node2D)
 
@@ -126,6 +127,10 @@ func _try_fire() -> void:
 
 	muzzle_flash_timer = MUZZLE_FLASH_DURATION
 	queue_redraw()
+
+
+func is_auto_fire() -> bool:
+	return true
 
 
 func manual_aim_at(target_pos: Vector2) -> void:

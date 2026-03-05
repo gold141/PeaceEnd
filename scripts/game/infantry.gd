@@ -25,6 +25,8 @@ var deploy_x: float = -1.0
 var deployed: bool = false
 var walk_timer: float = 0.0  # анимация ног
 var manually_controlled: bool = false
+var min_fire_angle: float = -3.0
+var max_fire_angle: float = 15.0
 
 # Сцена ракеты и контейнер — устанавливаются из battle_manager
 var rocket_scene: PackedScene
@@ -149,15 +151,18 @@ func manual_fire_at(target_pos: Vector2) -> bool:
 	if not rocket_scene or not projectiles_container:
 		return false
 
-	# Calculate angle to target (RPG-style: elevation based on distance)
-	var distance = abs(target_pos.x - global_position.x)
-	var elevation = remap(distance, 50.0, fire_range, 1.0, 6.0)
-	elevation += randf_range(-spread_degrees, spread_degrees)
-	elevation = clampf(elevation, -3.0, 8.0)
+	# Calculate angle from infantry to cursor
+	var direction = target_pos - global_position
+	var angle = rad_to_deg(atan2(-direction.y, direction.x))
+	angle = clampf(angle, min_fire_angle, max_fire_angle)
+
+	# Add spread
+	angle += randf_range(-spread_degrees, spread_degrees)
+	angle = clampf(angle, min_fire_angle, max_fire_angle)
 
 	var rocket = rocket_scene.instantiate()
 	rocket.global_position = global_position + Vector2(18, -30)
-	rocket.launch(elevation)
+	rocket.launch(angle)
 	projectiles_container.add_child(rocket)
 	fired_rocket.emit(rocket)
 	shots_fired += 1

@@ -200,8 +200,18 @@ func _on_projectile_fired(_angle: float, _power: float) -> void:
 
 func _on_unit_projectile(proj: Node2D) -> void:
 	if proj.has_signal("hit"):
-		if not proj.hit.is_connected(_on_projectile_hit):
-			proj.hit.connect(_on_projectile_hit)
+		if proj.get("is_bullet"):
+			if not proj.hit.is_connected(_on_bullet_hit):
+				proj.hit.connect(_on_bullet_hit)
+		else:
+			if not proj.hit.is_connected(_on_projectile_hit):
+				proj.hit.connect(_on_projectile_hit)
+
+
+func _on_bullet_hit(_pos: Vector2, body: Node2D) -> void:
+	# Пули — только прямой урон, без взрывов и кратеров
+	if body.has_method("take_damage"):
+		body.take_damage(1)
 
 
 func _on_projectile_hit(pos: Vector2, body: Node2D) -> void:

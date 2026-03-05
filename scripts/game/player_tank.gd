@@ -54,6 +54,8 @@ var smoke_timer: float = 0.0
 var smoke_particles: Array = []
 var smoke_spawn_timer: float = 0.0
 var manually_controlled: bool = false
+var min_fire_angle: float = 3.0
+var max_fire_angle: float = 35.0
 
 signal destroyed
 signal fired_projectile(proj: Node2D)
@@ -208,8 +210,32 @@ func manual_fire_at(target_pos: Vector2) -> bool:
 	if not projectile_scenes.has("shell") or not projectiles_container:
 		return false
 
-	_fire_at(target_pos)
+	# Calculate angle from tank to cursor
+	var direction = target_pos - global_position
+	var angle = rad_to_deg(atan2(-direction.y, direction.x))
+	angle = clampf(angle, min_fire_angle, max_fire_angle)
+
+	# Add spread
+	angle += randf_range(-spread_degrees, spread_degrees)
+	angle = clampf(angle, min_fire_angle, max_fire_angle)
+
+	var power = fire_power + randf_range(-fire_power * spread_power, fire_power * spread_power)
+
+	var shell_scene = projectile_scenes["shell"]
+	var proj = shell_scene.instantiate()
+	proj.is_enemy = false
+	proj.gravity_force = 120.0
+	proj.air_drag = 0.08
+	proj.trail_color = Color(0.5, 0.85, 0.5)
+	proj.global_position = global_position + Vector2(34, -16)
+	proj.launch(angle, power)
+	projectiles_container.add_child(proj)
+	fired_projectile.emit(proj)
+	shots_fired += 1
+
 	fire_timer = fire_interval
+	muzzle_flash_timer = MUZZLE_FLASH_DURATION
+	queue_redraw()
 	return true
 
 

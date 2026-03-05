@@ -61,7 +61,7 @@ func _unhandled_input(event: InputEvent) -> void:
 					get_viewport().set_input_as_handled()
 				# If no unit nearby, let artillery handle the press
 		else:
-			# === LMB RELEASE: fire from controlled unit ===
+			# === LMB RELEASE: fire once ===
 			if active:
 				_manual_fire()
 				get_viewport().set_input_as_handled()
@@ -120,6 +120,10 @@ func _process(delta: float) -> void:
 	# AA Gun: aim turret at mouse
 	if controlled_unit.has_method("manual_aim_at"):
 		controlled_unit.manual_aim_at(get_global_mouse_position())
+
+	# Auto-fire while LMB held — all units, fire_timer gates the rate
+	if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and mouse_screen_y <= 520:
+		_manual_fire()
 
 	# Hide system cursor in game area
 	if mouse_screen_y <= 520:
@@ -286,7 +290,17 @@ func _draw() -> void:
 		if "fire_timer" in controlled_unit:
 			can_fire = controlled_unit.fire_timer <= 0
 
-		var xhair_color = Color(1.0, 0.9, 0.2) if can_fire else Color(0.5, 0.5, 0.4)
+		# Check if cursor angle is within unit's aim limits
+		var aim_in_range = true
+		var min_angle = controlled_unit.get("min_fire_angle")
+		var max_angle = controlled_unit.get("max_fire_angle")
+		if min_angle != null and max_angle != null:
+			var aim_dir = get_global_mouse_position() - controlled_unit.global_position
+			var aim_angle = rad_to_deg(atan2(-aim_dir.y, aim_dir.x))
+			if aim_angle < min_angle or aim_angle > max_angle:
+				aim_in_range = false
+
+		var xhair_color = Color(1.0, 0.9, 0.2) if (can_fire and aim_in_range) else Color(0.5, 0.5, 0.4)
 
 		draw_line(mouse_local + Vector2(-s, 0), mouse_local + Vector2(s, 0), xhair_color, 2.0)
 		draw_line(mouse_local + Vector2(0, -s), mouse_local + Vector2(0, s), xhair_color, 2.0)

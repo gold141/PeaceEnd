@@ -55,7 +55,8 @@ var smoke_particles: Array = []
 var smoke_spawn_timer: float = 0.0
 const SMOKE_DURATION: float = 30.0
 var manually_controlled: bool = false
-
+var min_fire_angle: float = -10.0
+var max_fire_angle: float = 20.0
 signal destroyed
 signal fired_bullet(proj: Node2D)
 
@@ -174,6 +175,10 @@ func _try_fire() -> void:
 	queue_redraw()
 
 
+func is_auto_fire() -> bool:
+	return true
+
+
 func manual_fire_at(target_pos: Vector2) -> bool:
 	if not alive or not deployed:
 		return false
@@ -182,9 +187,14 @@ func manual_fire_at(target_pos: Vector2) -> bool:
 	if not projectile_scenes.has("bullet") or not projectiles_container:
 		return false
 
-	var angle = randf_range(0.0, 5.0)
+	# Calculate angle from vehicle to cursor
+	var direction = target_pos - global_position
+	var angle = rad_to_deg(atan2(-direction.y, direction.x))
+	angle = clampf(angle, min_fire_angle, max_fire_angle)
+
+	# Add spread
 	angle += randf_range(-spread_degrees, spread_degrees)
-	angle = clampf(angle, -3.0, 8.0)
+	angle = clampf(angle, min_fire_angle, max_fire_angle)
 
 	var bullet_scene = projectile_scenes["bullet"]
 	var proj = bullet_scene.instantiate()

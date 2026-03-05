@@ -1,150 +1,151 @@
-[gd_scene load_steps=12 format=3 uid="uid://c1battlescene"]
+[gd_scene format=3 uid="uid://c1battlescene"]
 
-[ext_resource type="Script" path="res://scripts/game/battle_manager.gd" id="1_battle"]
-[ext_resource type="Script" path="res://scripts/game/aiming_system.gd" id="2_aiming"]
+[ext_resource type="Script" uid="uid://cspafl3lhgjba" path="res://scripts/game/battle_manager.gd" id="1_battle"]
+[ext_resource type="Script" uid="uid://3rkwnsry5ylo" path="res://scripts/game/aiming_system.gd" id="2_aiming"]
 [ext_resource type="PackedScene" uid="uid://c1projectile" path="res://scenes/projectiles/projectile.tscn" id="3_projectile"]
-[ext_resource type="Script" path="res://scripts/ui/hud.gd" id="4_hud"]
+[ext_resource type="Script" uid="uid://kdq3dcj64rse" path="res://scripts/ui/hud.gd" id="4_hud"]
 [ext_resource type="PackedScene" uid="uid://c1explosion" path="res://scenes/effects/explosion.tscn" id="8_explosion"]
-[ext_resource type="AudioStream" path="res://assets/sounds/shot.wav" id="9_shoot"]
+[ext_resource type="AudioStream" uid="uid://rccro2vmuvu1" path="res://assets/sounds/shot.wav" id="9_shoot"]
 [ext_resource type="PackedScene" uid="uid://c1crater" path="res://scenes/effects/crater.tscn" id="10_crater"]
 [ext_resource type="PackedScene" uid="uid://c1dirtburst" path="res://scenes/effects/dirt_burst.tscn" id="11_dirt"]
-[ext_resource type="Script" path="res://scripts/game/destructible_terrain.gd" id="12_terrain"]
-[ext_resource type="Script" path="res://scripts/ui/action_panel.gd" id="14_action_panel"]
-[ext_resource type="Script" path="res://scripts/game/infantry_placer.gd" id="15_infantry_placer"]
-[ext_resource type="Script" path="res://scripts/game/range_visualizer.gd" id="17_range_vis"]
-[ext_resource type="Script" path="res://scripts/game/unit_control.gd" id="21_unit_control"]
-[ext_resource type="Script" path="res://scripts/game/economy.gd" id="18_economy"]
-[ext_resource type="Script" path="res://scripts/game/enemy_ai.gd" id="19_enemy_ai"]
-[ext_resource type="Script" path="res://scripts/game/camera_controller.gd" id="20_camera"]
+[ext_resource type="Script" uid="uid://0psmddsy8ot5" path="res://scripts/game/destructible_terrain.gd" id="12_terrain"]
+[ext_resource type="Script" uid="uid://bwgpt50cidq7j" path="res://scripts/ui/action_panel.gd" id="14_action_panel"]
+[ext_resource type="Script" uid="uid://dnigum2jk07sl" path="res://scripts/game/infantry_placer.gd" id="15_infantry_placer"]
+[ext_resource type="Script" uid="uid://ci5jihbco2n2p" path="res://scripts/game/range_visualizer.gd" id="17_range_vis"]
+[ext_resource type="Script" uid="uid://kwkanyafrjre" path="res://scripts/game/economy.gd" id="18_economy"]
+[ext_resource type="Script" uid="uid://s7gayxvte41m" path="res://scripts/game/enemy_ai.gd" id="19_enemy_ai"]
+[ext_resource type="Script" uid="uid://bgtsxhg0kec6y" path="res://scripts/game/camera_controller.gd" id="20_camera"]
+[ext_resource type="Script" uid="uid://bcmil33hdw4ms" path="res://scripts/game/unit_control.gd" id="21_unit_control"]
 
-[node name="Battle" type="Node2D"]
+[node name="Battle" type="Node2D" unique_id=1523023598]
 script = ExtResource("1_battle")
 explosion_scene = ExtResource("8_explosion")
 crater_scene = ExtResource("10_crater")
 dirt_burst_scene = ExtResource("11_dirt")
 
-[node name="Background" type="ColorRect" parent="."]
-offset_top = -2000.0
-offset_right = 6400.0
-offset_bottom = 720.0
-color = Color(0.45, 0.65, 0.82, 1)
+[node name="Background" type="ColorRect" parent="." unique_id=1952938596]
+offset_left = -86.0
+offset_top = -1997.0
+offset_right = 6314.0
+offset_bottom = 723.0
 mouse_filter = 2
+color = Color(0.45, 0.65, 0.82, 1)
 
-[node name="Camera" type="Camera2D" parent="."]
+[node name="Camera" type="Camera2D" parent="." unique_id=1389696735]
 position = Vector2(640, 360)
 script = ExtResource("20_camera")
 
-[node name="Terrain" type="Node2D" parent="."]
+[node name="Terrain" type="Node2D" parent="." unique_id=984121240]
 script = ExtResource("12_terrain")
 
-[node name="AimingSystem" type="Node2D" parent="."]
+[node name="AimingSystem" type="Node2D" parent="." unique_id=1896794852]
 position = Vector2(100, 425)
 script = ExtResource("2_aiming")
 projectile_scene = ExtResource("3_projectile")
 
-[node name="ShootSound" type="AudioStreamPlayer" parent="AimingSystem"]
+[node name="ShootSound" type="AudioStreamPlayer" parent="AimingSystem" unique_id=1013358660]
 stream = ExtResource("9_shoot")
 
-[node name="Projectiles" type="Node2D" parent="."]
+[node name="Projectiles" type="Node2D" parent="." unique_id=1180775497]
 
-[node name="Economy" type="Node" parent="."]
+[node name="Economy" type="Node" parent="." unique_id=1284275695]
 script = ExtResource("18_economy")
 
-[node name="EnemyAI" type="Node" parent="."]
+[node name="EnemyAI" type="Node" parent="." unique_id=1647247744]
 script = ExtResource("19_enemy_ai")
 
-[node name="HUD" type="CanvasLayer" parent="."]
+[node name="HUD" type="CanvasLayer" parent="." unique_id=1833021164]
 script = ExtResource("4_hud")
 
-[node name="AngleLabel" type="Label" parent="HUD"]
+[node name="AngleLabel" type="Label" parent="HUD" unique_id=243254924]
 offset_left = 20.0
 offset_top = 20.0
 offset_right = 220.0
 offset_bottom = 44.0
 theme_override_font_sizes/font_size = 20
 text = "Angle: 45°"
-mouse_filter = 2
 
-[node name="PowerLabel" type="Label" parent="HUD"]
+[node name="PowerLabel" type="Label" parent="HUD" unique_id=2094508334]
 offset_left = 20.0
 offset_top = 50.0
 offset_right = 220.0
 offset_bottom = 74.0
 theme_override_font_sizes/font_size = 20
 text = "Power: 400"
-mouse_filter = 2
 
-[node name="ReloadBar" type="ProgressBar" parent="HUD"]
+[node name="ReloadBar" type="ProgressBar" parent="HUD" unique_id=439110706]
 offset_left = 20.0
 offset_top = 80.0
 offset_right = 220.0
 offset_bottom = 100.0
-value = 100.0
 mouse_filter = 2
+value = 100.0
 
-[node name="ChargePanel" type="HBoxContainer" parent="HUD"]
+[node name="ChargePanel" type="HBoxContainer" parent="HUD" unique_id=385745663]
 offset_left = 20.0
 offset_top = 110.0
 offset_right = 220.0
 offset_bottom = 150.0
 theme_override_constants/separation = 8
 
-[node name="ChargeLabel" type="Label" parent="HUD/ChargePanel"]
+[node name="ChargeLabel" type="Label" parent="HUD/ChargePanel" unique_id=1547243012]
 custom_minimum_size = Vector2(50, 0)
+layout_mode = 2
 theme_override_font_sizes/font_size = 16
 text = "Charge:"
 vertical_alignment = 1
-mouse_filter = 2
 
-[node name="Charge1" type="Button" parent="HUD/ChargePanel"]
+[node name="Charge1" type="Button" parent="HUD/ChargePanel" unique_id=913101359]
 custom_minimum_size = Vector2(40, 36)
+layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "1"
 
-[node name="Charge2" type="Button" parent="HUD/ChargePanel"]
+[node name="Charge2" type="Button" parent="HUD/ChargePanel" unique_id=154287852]
 custom_minimum_size = Vector2(40, 36)
+layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "2"
 
-[node name="Charge3" type="Button" parent="HUD/ChargePanel"]
+[node name="Charge3" type="Button" parent="HUD/ChargePanel" unique_id=1455667561]
 custom_minimum_size = Vector2(40, 36)
+layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "3"
 
-[node name="MoneyLabel" type="Label" parent="HUD"]
+[node name="MoneyLabel" type="Label" parent="HUD" unique_id=2087038220]
 offset_left = 1060.0
 offset_top = 20.0
 offset_right = 1260.0
 offset_bottom = 44.0
-theme_override_font_sizes/font_size = 20
 theme_override_colors/font_color = Color(0.95, 0.85, 0.3, 1)
+theme_override_font_sizes/font_size = 20
 text = "$300  (+15/s)"
 horizontal_alignment = 2
-mouse_filter = 2
 
-[node name="SpeedLabel" type="Label" parent="HUD"]
+[node name="SpeedLabel" type="Label" parent="HUD" unique_id=901350283]
 offset_left = 1060.0
 offset_top = 50.0
 offset_right = 1260.0
 offset_bottom = 74.0
-theme_override_font_sizes/font_size = 18
 theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
+theme_override_font_sizes/font_size = 18
 text = "x1 [F]"
 horizontal_alignment = 2
-mouse_filter = 2
 
-[node name="ActionPanel" type="Control" parent="HUD"]
-offset_left = 0.0
+[node name="ActionPanel" type="Control" parent="HUD" unique_id=1479411807]
+layout_mode = 3
+anchors_preset = 0
 offset_top = 520.0
 offset_right = 1280.0
 offset_bottom = 720.0
 script = ExtResource("14_action_panel")
 
-[node name="InfantryPlacer" type="Node2D" parent="."]
+[node name="InfantryPlacer" type="Node2D" parent="." unique_id=483440131]
 script = ExtResource("15_infantry_placer")
 
-[node name="RangeVisualizer" type="Node2D" parent="."]
+[node name="RangeVisualizer" type="Node2D" parent="." unique_id=2038130214]
 script = ExtResource("17_range_vis")
 
-[node name="UnitControl" type="Node2D" parent="."]
+[node name="UnitControl" type="Node2D" parent="." unique_id=1454465773]
 script = ExtResource("21_unit_control")

@@ -9,6 +9,7 @@ extends Area2D
 var velocity: Vector2 = Vector2.ZERO
 var launched: bool = false
 var is_enemy: bool = false
+var is_bullet: bool = true
 var damage: float = 0.3
 
 var trail_points: Array = []
