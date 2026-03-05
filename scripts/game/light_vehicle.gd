@@ -54,6 +54,7 @@ var smoke_timer: float = 0.0
 var smoke_particles: Array = []
 var smoke_spawn_timer: float = 0.0
 const SMOKE_DURATION: float = 30.0
+var manually_controlled: bool = false
 
 signal destroyed
 signal fired_bullet(proj: Node2D)
@@ -91,11 +92,14 @@ func _process(delta: float) -> void:
 		queue_redraw()
 
 	elif alive and deployed:
-		# Стреляем
-		fire_timer -= delta
-		if fire_timer <= 0:
-			fire_timer = fire_interval + randf_range(-0.2, 0.2)
-			_try_fire()
+		if not manually_controlled:
+			fire_timer -= delta
+			if fire_timer <= 0:
+				fire_timer = fire_interval + randf_range(-0.2, 0.2)
+				_try_fire()
+		else:
+			if fire_timer > 0:
+				fire_timer -= delta
 
 		if muzzle_flash_timer > 0:
 			muzzle_flash_timer -= delta
@@ -168,6 +172,33 @@ func _try_fire() -> void:
 
 	muzzle_flash_timer = MUZZLE_FLASH_DURATION
 	queue_redraw()
+
+
+func manual_fire_at(target_pos: Vector2) -> bool:
+	if not alive or not deployed:
+		return false
+	if fire_timer > 0:
+		return false
+	if not projectile_scenes.has("bullet") or not projectiles_container:
+		return false
+
+	var angle = randf_range(0.0, 5.0)
+	angle += randf_range(-spread_degrees, spread_degrees)
+	angle = clampf(angle, -3.0, 8.0)
+
+	var bullet_scene = projectile_scenes["bullet"]
+	var proj = bullet_scene.instantiate()
+	proj.global_position = global_position + Vector2(16, -22)
+	proj.damage = damage
+	proj.launch(angle, 900.0)
+	projectiles_container.add_child(proj)
+	fired_bullet.emit(proj)
+	shots_fired += 1
+
+	fire_timer = fire_interval
+	muzzle_flash_timer = MUZZLE_FLASH_DURATION
+	queue_redraw()
+	return true
 
 
 func _find_target() -> Node2D:

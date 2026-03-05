@@ -53,6 +53,7 @@ var smoking: bool = false
 var smoke_timer: float = 0.0
 var smoke_particles: Array = []
 var smoke_spawn_timer: float = 0.0
+var manually_controlled: bool = false
 
 signal destroyed
 signal fired_projectile(proj: Node2D)
@@ -84,13 +85,16 @@ func _process(delta: float) -> void:
 		queue_redraw()
 
 	elif alive and deployed:
-		# Стреляем
-		var best_target = _find_closest_target()
-		if best_target != Vector2.ZERO:
-			fire_timer -= delta
-			if fire_timer <= 0:
-				fire_timer = fire_interval + randf_range(-0.5, 0.5)
-				_fire_at(best_target)
+		if not manually_controlled:
+			var best_target = _find_closest_target()
+			if best_target != Vector2.ZERO:
+				fire_timer -= delta
+				if fire_timer <= 0:
+					fire_timer = fire_interval + randf_range(-0.5, 0.5)
+					_fire_at(best_target)
+		else:
+			if fire_timer > 0:
+				fire_timer -= delta
 
 		if muzzle_flash_timer > 0:
 			muzzle_flash_timer -= delta
@@ -194,6 +198,19 @@ func _fire_at(target_pos: Vector2) -> void:
 
 	muzzle_flash_timer = MUZZLE_FLASH_DURATION
 	queue_redraw()
+
+
+func manual_fire_at(target_pos: Vector2) -> bool:
+	if not alive or not deployed:
+		return false
+	if fire_timer > 0:
+		return false
+	if not projectile_scenes.has("shell") or not projectiles_container:
+		return false
+
+	_fire_at(target_pos)
+	fire_timer = fire_interval
+	return true
 
 
 func take_damage(amount: int = 1) -> void:

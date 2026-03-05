@@ -26,6 +26,7 @@ var shots_hit: int = 0
 var deployed: bool = false
 var deploy_x: float = 0.0
 var walk_timer: float = 0.0  # анимация ног
+var manually_controlled: bool = false
 
 # Стрельба
 var fire_timer: float = 0.0
@@ -83,10 +84,14 @@ func _process(delta: float) -> void:
 		return
 
 	# Развёрнуты — стреляем
-	fire_timer -= delta
-	if fire_timer <= 0:
-		fire_timer = fire_interval + randf_range(-0.03, 0.03)
-		_try_fire()
+	if not manually_controlled:
+		fire_timer -= delta
+		if fire_timer <= 0:
+			fire_timer = fire_interval + randf_range(-0.03, 0.03)
+			_try_fire()
+	else:
+		if fire_timer > 0:
+			fire_timer -= delta
 
 	if muzzle_flash_timer > 0:
 		muzzle_flash_timer -= delta
@@ -117,6 +122,33 @@ func _try_fire() -> void:
 
 	muzzle_flash_timer = MUZZLE_FLASH_DURATION
 	queue_redraw()
+
+
+func manual_fire_at(target_pos: Vector2) -> bool:
+	if not alive or not deployed:
+		return false
+	if fire_timer > 0:
+		return false
+	if not projectile_scenes.has("bullet") or not projectiles_container:
+		return false
+
+	var angle = randf_range(0.0, 3.0)
+	angle += randf_range(-spread_degrees, spread_degrees)
+	angle = clampf(angle, -2.0, 6.0)
+
+	var bullet_scene = projectile_scenes["bullet"]
+	var proj = bullet_scene.instantiate()
+	proj.global_position = global_position + Vector2(26, -28)
+	proj.damage = damage
+	proj.launch(angle, 900.0)
+	projectiles_container.add_child(proj)
+	fired_bullet.emit(proj)
+	shots_fired += 1
+
+	fire_timer = fire_interval
+	muzzle_flash_timer = MUZZLE_FLASH_DURATION
+	queue_redraw()
+	return true
 
 
 func _find_target() -> Node2D:

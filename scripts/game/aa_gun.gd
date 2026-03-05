@@ -38,6 +38,8 @@ var ammo_box_color: Color = Color(0.25, 0.25, 0.2)
 # Вспышка выстрела
 var muzzle_flash_timer: float = 0.0
 const MUZZLE_FLASH_DURATION: float = 0.08
+var manually_controlled: bool = false
+var can_move: bool = false  # AA Gun is stationary
 
 signal destroyed
 signal fired_bullet(proj: Node2D)
@@ -60,22 +62,22 @@ func _process(delta: float) -> void:
 	if not alive:
 		return
 
-	# Поиск и отслеживание цели
-	current_target = _find_air_target()
+	if not manually_controlled:
+		current_target = _find_air_target()
 
-	# Поворот стволов к цели
-	if current_target:
-		var to_target = current_target.global_position - global_position
-		gun_angle = to_target.angle()
+		if current_target:
+			var to_target = current_target.global_position - global_position
+			gun_angle = to_target.angle()
+		else:
+			gun_angle = lerp_angle(gun_angle, -PI / 2, delta * 2.0)
+
+		fire_timer -= delta
+		if fire_timer <= 0:
+			fire_timer = fire_interval + randf_range(-0.05, 0.05)
+			_try_fire()
 	else:
-		# Нет целей — стволы вверх (плавно)
-		gun_angle = lerp_angle(gun_angle, -PI / 2, delta * 2.0)
-
-	# Стрельба
-	fire_timer -= delta
-	if fire_timer <= 0:
-		fire_timer = fire_interval + randf_range(-0.05, 0.05)
-		_try_fire()
+		if fire_timer > 0:
+			fire_timer -= delta
 
 	if muzzle_flash_timer > 0:
 		muzzle_flash_timer -= delta
@@ -124,6 +126,43 @@ func _try_fire() -> void:
 
 	muzzle_flash_timer = MUZZLE_FLASH_DURATION
 	queue_redraw()
+
+
+func manual_aim_at(target_pos: Vector2) -> void:
+	if not alive:
+		return
+	var to_target = target_pos - global_position
+	gun_angle = to_target.angle()
+	queue_redraw()
+
+
+func manual_fire_at(target_pos: Vector2) -> bool:
+	if not alive:
+		return false
+	if fire_timer > 0:
+		return false
+	if not projectile_scenes.has("bullet") or not projectiles_container:
+		return false
+
+	var to_target = (target_pos - global_position).normalized()
+	var angle = rad_to_deg(atan2(-to_target.y, to_target.x))
+	angle += randf_range(-spread_degrees, spread_degrees)
+
+	var barrel_dir = Vector2(cos(gun_angle), sin(gun_angle))
+	var launch_pos = global_position + Vector2(0, -30) + barrel_dir * 20.0
+
+	var bullet_scene = projectile_scenes["bullet"]
+	var proj = bullet_scene.instantiate()
+	proj.global_position = launch_pos
+	proj.launch(angle, 800.0)
+	projectiles_container.add_child(proj)
+	fired_bullet.emit(proj)
+	shots_fired += 1
+
+	fire_timer = fire_interval
+	muzzle_flash_timer = MUZZLE_FLASH_DURATION
+	queue_redraw()
+	return true
 
 
 func take_damage(amount: int = 1) -> void:

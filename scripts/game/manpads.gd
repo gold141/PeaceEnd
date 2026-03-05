@@ -41,6 +41,7 @@ var tube_tip_color: Color = Color(0.35, 0.33, 0.28)
 # Вспышка/выхлоп при пуске
 var backblast_timer: float = 0.0
 const BACKBLAST_DURATION: float = 0.4
+var manually_controlled: bool = false
 
 signal destroyed
 signal fired_missile(proj: Node2D)
@@ -79,10 +80,14 @@ func _process(delta: float) -> void:
 		return
 
 	# Развёрнуты — стреляем
-	fire_timer -= delta
-	if fire_timer <= 0:
-		fire_timer = fire_interval + randf_range(-0.5, 0.5)
-		_try_fire()
+	if not manually_controlled:
+		fire_timer -= delta
+		if fire_timer <= 0:
+			fire_timer = fire_interval + randf_range(-0.5, 0.5)
+			_try_fire()
+	else:
+		if fire_timer > 0:
+			fire_timer -= delta
 
 	if backblast_timer > 0:
 		backblast_timer -= delta
@@ -121,6 +126,47 @@ func _try_fire() -> void:
 
 	backblast_timer = BACKBLAST_DURATION
 	queue_redraw()
+
+
+func manual_fire_at(target_pos: Vector2) -> bool:
+	if not alive or not deployed:
+		return false
+	if fire_timer > 0:
+		return false
+	if not projectile_scenes.has("aa_missile") or not projectiles_container:
+		return false
+
+	var missile = projectile_scenes["aa_missile"].instantiate()
+	missile.global_position = global_position + Vector2(8, -25)
+
+	# Try to find nearest air unit near cursor for homing
+	var best_air: Node2D = null
+	var best_dist: float = 100.0  # search radius around cursor
+	for unit in get_tree().get_nodes_in_group("air_units"):
+		if "alive" in unit and not unit.alive:
+			continue
+		var dist = unit.global_position.distance_to(target_pos)
+		if dist < best_dist:
+			best_dist = dist
+			best_air = unit
+
+	if best_air:
+		# Homing missile toward air unit
+		var dir = (best_air.global_position - global_position).normalized()
+		missile.launch_at(best_air, dir)
+	else:
+		# No air target near cursor — fire in direction of cursor (no homing)
+		var dir = (target_pos - global_position).normalized()
+		missile.launch_at(null, dir)
+
+	projectiles_container.add_child(missile)
+	fired_missile.emit(missile)
+	shots_fired += 1
+
+	fire_timer = fire_interval
+	backblast_timer = BACKBLAST_DURATION
+	queue_redraw()
+	return true
 
 
 func take_damage(amount: int = 1) -> void:

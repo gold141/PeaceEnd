@@ -24,6 +24,7 @@ var walk_speed: float = 30.0
 var deploy_x: float = -1.0
 var deployed: bool = false
 var walk_timer: float = 0.0  # анимация ног
+var manually_controlled: bool = false
 
 # Сцена ракеты и контейнер — устанавливаются из battle_manager
 var rocket_scene: PackedScene
@@ -84,10 +85,15 @@ func _process(delta: float) -> void:
 		return
 
 	# Развёрнуты — стреляем
-	fire_timer -= delta
-	if fire_timer <= 0:
-		fire_timer = fire_interval + randf_range(-0.3, 0.3)
-		_try_fire()
+	if not manually_controlled:
+		fire_timer -= delta
+		if fire_timer <= 0:
+			fire_timer = fire_interval + randf_range(-0.3, 0.3)
+			_try_fire()
+	else:
+		# Timer still ticks for reload tracking
+		if fire_timer > 0:
+			fire_timer -= delta
 
 	if muzzle_flash_timer > 0:
 		muzzle_flash_timer -= delta
@@ -133,6 +139,33 @@ func _try_fire() -> void:
 
 	muzzle_flash_timer = MUZZLE_FLASH_DURATION
 	queue_redraw()
+
+
+func manual_fire_at(target_pos: Vector2) -> bool:
+	if not alive or not deployed:
+		return false
+	if fire_timer > 0:
+		return false
+	if not rocket_scene or not projectiles_container:
+		return false
+
+	# Calculate angle to target (RPG-style: elevation based on distance)
+	var distance = abs(target_pos.x - global_position.x)
+	var elevation = remap(distance, 50.0, fire_range, 1.0, 6.0)
+	elevation += randf_range(-spread_degrees, spread_degrees)
+	elevation = clampf(elevation, -3.0, 8.0)
+
+	var rocket = rocket_scene.instantiate()
+	rocket.global_position = global_position + Vector2(18, -30)
+	rocket.launch(elevation)
+	projectiles_container.add_child(rocket)
+	fired_rocket.emit(rocket)
+	shots_fired += 1
+
+	fire_timer = fire_interval
+	muzzle_flash_timer = MUZZLE_FLASH_DURATION
+	queue_redraw()
+	return true
 
 
 func take_damage(amount: int = 1) -> void:
