@@ -15,6 +15,8 @@ extends Node2D
 
 var unit_type: String = "manpads"
 var team: String = "player"
+var min_fire_angle: float = 10.0
+var max_fire_angle: float = 170.0
 var hp: int
 var alive: bool = true
 var shots_fired: int = 0

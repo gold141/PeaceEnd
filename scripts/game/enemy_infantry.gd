@@ -17,6 +17,8 @@ extends Node2D
 
 var unit_type: String = "enemy_infantry"
 var team: String = "enemy"
+var min_fire_angle: float = 174.0
+var max_fire_angle: float = 183.0
 var hp: int
 var alive: bool = true
 var shots_fired: int = 0

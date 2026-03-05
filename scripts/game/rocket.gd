@@ -26,6 +26,7 @@ extends Area2D
 
 var velocity: Vector2 = Vector2.ZERO
 var launched: bool = false
+var is_enemy: bool = false
 var flight_time: float = 0.0
 var direction: Vector2 = Vector2.RIGHT
 

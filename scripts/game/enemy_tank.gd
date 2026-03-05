@@ -27,6 +27,8 @@ extends StaticBody2D
 
 var unit_type: String = "enemy_tank"
 var team: String = "enemy"
+var min_fire_angle: float = 145.0
+var max_fire_angle: float = 177.0
 var hp: int
 var alive: bool = true
 var smoking: bool = false

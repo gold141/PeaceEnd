@@ -90,31 +90,45 @@ func _draw() -> void:
 	var start_angle: float
 	var end_angle: float
 
-	match hovered_fire_dir:
-		"right":
-			start_angle = -PI * 0.5
-			end_angle = PI * 0.5
-		"left":
-			start_angle = PI * 0.5
-			end_angle = PI * 1.5
-		"up":
-			start_angle = PI
-			end_angle = TAU
-		"full":
-			start_angle = 0
-			end_angle = TAU
+	# Используем реальные углы стрельбы юнита, если есть
+	var unit_min = hovered_unit.get("min_fire_angle")
+	var unit_max = hovered_unit.get("max_fire_angle")
+
+	if unit_min != null and unit_max != null:
+		# Конвертация: игровые углы (0°=вправо, +=вверх) → Godot draw (0=вправо, +=вниз)
+		start_angle = -deg_to_rad(unit_max)
+		end_angle = -deg_to_rad(unit_min)
+	else:
+		# Фоллбэк: generic дуга
+		match hovered_fire_dir:
+			"right":
+				start_angle = -PI * 0.5
+				end_angle = PI * 0.5
+			"left":
+				start_angle = PI * 0.5
+				end_angle = PI * 1.5
+			"up":
+				start_angle = PI
+				end_angle = TAU
+			"full":
+				start_angle = 0
+				end_angle = TAU
 
 	var segments = 32
+	var arc_span = end_angle - start_angle
+	var is_full_circle = absf(arc_span) >= TAU - 0.01
+
 	var points: PackedVector2Array = PackedVector2Array()
-	points.append(center)
+	if not is_full_circle:
+		points.append(center)
 	for i in range(segments + 1):
-		var angle = start_angle + (end_angle - start_angle) * float(i) / float(segments)
+		var angle = start_angle + arc_span * float(i) / float(segments)
 		points.append(center + Vector2(cos(angle), sin(angle)) * r)
 	draw_colored_polygon(points, hovered_color)
 
 	draw_arc(center, r, start_angle, end_angle, segments, hovered_outline, 1.5)
 
-	if hovered_fire_dir != "full":
+	if not is_full_circle:
 		var p1 = center + Vector2(cos(start_angle), sin(start_angle)) * r
 		var p2 = center + Vector2(cos(end_angle), sin(end_angle)) * r
 		draw_line(center, p1, hovered_outline, 1.0)

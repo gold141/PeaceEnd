@@ -7,7 +7,7 @@ extends Node2D
 ## Скорость ходьбы (пикселей/сек)
 @export var walk_speed: float = 30.0
 ## Дальность стрельбы (пиксели)
-@export var fire_range: float = 250.0
+@export var fire_range: float = 200.0
 ## Интервал стрельбы (секунды) — быстрая очередь
 @export var fire_interval: float = 0.25
 ## Разброс угла (градусы)
@@ -17,6 +17,8 @@ extends Node2D
 
 var unit_type: String = "machine_gunner"
 var team: String = "player"
+var min_fire_angle: float = -4.0
+var max_fire_angle: float = 12.0
 var hp: int
 var alive: bool = true
 var shots_fired: int = 0
@@ -109,7 +111,7 @@ func _try_fire() -> void:
 	# Почти горизонтальный огонь
 	var angle = randf_range(0.0, 3.0)
 	angle += randf_range(-spread_degrees, spread_degrees)
-	angle = clampf(angle, -2.0, 6.0)
+	angle = clampf(angle, -4.0, 12.0)
 
 	var bullet_scene = projectile_scenes["bullet"]
 	var proj = bullet_scene.instantiate()
@@ -134,7 +136,7 @@ func manual_fire_at(target_pos: Vector2) -> bool:
 
 	var angle = randf_range(0.0, 3.0)
 	angle += randf_range(-spread_degrees, spread_degrees)
-	angle = clampf(angle, -2.0, 6.0)
+	angle = clampf(angle, -4.0, 12.0)
 
 	var bullet_scene = projectile_scenes["bullet"]
 	var proj = bullet_scene.instantiate()
