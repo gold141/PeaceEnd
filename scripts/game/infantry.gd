@@ -54,7 +54,7 @@ func _ready() -> void:
 
 	# Если заспавнен за левым краем — идёт к позиции развёртывания
 	if global_position.x < 0:
-		deploy_x = randf_range(100.0, 500.0)
+		deploy_x = randf_range(100.0, 2500.0)
 		deployed = false
 	else:
 		# Размещён вручную (infantry_placer) — сразу развёрнут

@@ -62,7 +62,7 @@ func _ready() -> void:
 	add_to_group("enemy_tanks")
 	add_to_group("enemy_units")
 	fire_timer = randf_range(0.5, fire_interval)
-	deploy_x = randf_range(500.0, 900.0)
+	deploy_x = randf_range(2500.0, 4500.0)
 
 
 func setup_battle(proj_container: Node2D, proj_scenes: Dictionary, _manager: Node2D) -> void:

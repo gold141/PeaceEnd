@@ -51,7 +51,7 @@ func _ready() -> void:
 	add_to_group("player_units")
 	add_to_group("infantry")
 	add_to_group("anti_air_units")
-	deploy_x = randf_range(80.0, 350.0)
+	deploy_x = randf_range(80.0, 1750.0)
 	fire_timer = 1.5
 
 

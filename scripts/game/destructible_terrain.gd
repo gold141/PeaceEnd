@@ -3,7 +3,7 @@
 extends Node2D
 
 ## Ширина террейна
-@export var terrain_width: int = 1280
+@export var terrain_width: int = 6400
 ## Высота террейна
 @export var terrain_height: int = 70
 ## Позиция верха террейна (Y)

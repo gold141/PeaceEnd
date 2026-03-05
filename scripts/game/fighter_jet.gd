@@ -69,7 +69,7 @@ func _calculate_bomb_target() -> void:
 
 	if all_targets.is_empty():
 		# Нет целей — бомбим середину поля
-		bomb_target_x = 500.0
+		bomb_target_x = 2500.0
 		return
 
 	# Считаем плотность в окнах по 80 пикселей

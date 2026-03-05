@@ -58,7 +58,7 @@ func _ready() -> void:
 	hp = max_hp
 	add_to_group("air_units")
 	add_to_group("enemy_units")
-	hover_x = randf_range(400.0, 900.0)
+	hover_x = randf_range(2000.0, 4500.0)
 	fire_timer = randf_range(0.5, fire_interval)
 
 
@@ -134,7 +134,7 @@ func _process_hover(delta: float) -> void:
 func _process_retreat(delta: float) -> void:
 	position.x += retreat_speed * delta
 
-	if position.x > 1450:
+	if position.x > 6600:
 		queue_free()
 
 

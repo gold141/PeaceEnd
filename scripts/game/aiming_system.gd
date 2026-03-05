@@ -59,9 +59,9 @@ func _process(delta: float) -> void:
 
 	_update_aim_from_mouse()
 
-	# Показываем/скрываем курсор в зависимости от зоны
-	var mouse_y = get_global_mouse_position().y
-	if mouse_y > 520 or input_blocked:
+	# Показываем/скрываем курсор в зависимости от зоны (экранные координаты)
+	var mouse_screen_y = get_viewport().get_mouse_position().y
+	if mouse_screen_y > 520 or input_blocked:
 		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	else:
 		Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
@@ -74,9 +74,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-			# Не стреляем если курсор ниже игровой зоны (в панели действий)
-			var mouse_y = get_global_mouse_position().y
-			if mouse_y > 520:
+			# Не стреляем если курсор ниже игровой зоны (экранные координаты)
+			var mouse_screen_y = get_viewport().get_mouse_position().y
+			if mouse_screen_y > 520:
 				return
 			_fire()
 	elif event is InputEventKey and event.pressed:

@@ -24,7 +24,7 @@ var hovered_fire_dir: String = "right"  # "right", "left", "up", "full"
 
 func _process(_delta: float) -> void:
 	var mouse = get_global_mouse_position()
-	if mouse.y > 520:
+	if get_viewport().get_mouse_position().y > 520:
 		if hovered_unit:
 			hovered_unit = null
 			queue_redraw()

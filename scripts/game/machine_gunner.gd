@@ -55,7 +55,7 @@ func _ready() -> void:
 	hp = max_hp
 	add_to_group("player_units")
 	add_to_group("infantry")
-	deploy_x = randf_range(80.0, 400.0)
+	deploy_x = randf_range(80.0, 2000.0)
 	fire_timer = 0.5
 
 

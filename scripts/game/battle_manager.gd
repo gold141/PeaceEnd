@@ -171,15 +171,15 @@ func spawn_enemy_unit(unit_type: String) -> Node2D:
 	var pos: Vector2
 	match unit_type:
 		"fighter_jet":
-			pos = Vector2(1350, randf_range(80, 140))
+			pos = Vector2(6500, randf_range(80, 140))
 		"attack_helicopter":
-			pos = Vector2(1350, randf_range(120, 180))
+			pos = Vector2(6500, randf_range(120, 180))
 		"kamikaze_drone":
-			pos = Vector2(1350, randf_range(100, 200))
+			pos = Vector2(6500, randf_range(100, 200))
 		"enemy_tank", "enemy_apc":
-			pos = Vector2(1350, GROUND_Y - 2)
+			pos = Vector2(6500, GROUND_Y - 2)
 		_:
-			pos = Vector2(1320, GROUND_Y)
+			pos = Vector2(6450, GROUND_Y)
 
 	return spawn_unit(unit_type, pos, "enemy")
 
