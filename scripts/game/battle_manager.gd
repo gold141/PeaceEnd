@@ -13,6 +13,9 @@ extends Node2D
 @onready var infantry_placer: Node2D = $InfantryPlacer
 @onready var economy: Node = $Economy
 @onready var enemy_ai: Node = $EnemyAI
+@onready var range_visualizer: Node2D = $RangeVisualizer
+@onready var unit_control: Node2D = $UnitControl
+@onready var camera: Camera2D = $Camera
 
 # Preloaded unit scripts
 var unit_scripts = {
@@ -58,6 +61,9 @@ func _ready() -> void:
 	infantry_placer.infantry_placed.connect(_on_unit_placed)
 
 	enemy_ai.setup(self, economy)
+
+	unit_control.setup(range_visualizer, aiming_system, camera)
+	hud.setup_unit_control(unit_control)
 
 
 # === SPAWN SYSTEM ===

@@ -94,6 +94,13 @@ func _process(delta: float) -> void:
 	if controlled_unit.has_method("manual_aim_at"):
 		controlled_unit.manual_aim_at(get_global_mouse_position())
 
+	# Hide system cursor in game area
+	var mouse_screen_y = get_viewport().get_mouse_position().y
+	if mouse_screen_y <= 520:
+		Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
+	else:
+		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+
 	# Outline pulse
 	outline_pulse += delta * 3.0
 	if outline_pulse > TAU:

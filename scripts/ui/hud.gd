@@ -14,6 +14,8 @@ extends CanvasLayer
 
 var aiming_system: Node2D
 var economy: Node
+var unit_control: Node2D = null
+var controlled_unit: Node2D = null
 
 const CHARGE_LABELS = ["1", "2", "3"]
 const CHARGE_COLORS_ACTIVE = [
@@ -77,6 +79,20 @@ func _make_stylebox(color: Color) -> StyleBoxFlat:
 	return sb
 
 
+func setup_unit_control(uc: Node2D) -> void:
+	unit_control = uc
+	unit_control.unit_selected.connect(_on_unit_controlled)
+	unit_control.unit_deselected.connect(_on_unit_released)
+
+
+func _on_unit_controlled(unit: Node2D) -> void:
+	controlled_unit = unit
+
+
+func _on_unit_released() -> void:
+	controlled_unit = null
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed:
 		# F — ускорение/замедление времени
@@ -93,14 +109,30 @@ func _process(_delta: float) -> void:
 	if not aiming_system:
 		return
 
-	angle_label.text = "Angle: %d°" % int(aiming_system.current_angle)
-	power_label.text = "Power: %d" % int(aiming_system.launch_power)
+	if controlled_unit and is_instance_valid(controlled_unit) and "alive" in controlled_unit and controlled_unit.alive:
+		# Show controlled unit info
+		var unit_name = controlled_unit.unit_type if "unit_type" in controlled_unit else "Unit"
+		var hp_str = ""
+		if "hp" in controlled_unit and "max_hp" in controlled_unit:
+			hp_str = " HP:%d/%d" % [controlled_unit.hp, controlled_unit.max_hp]
+		angle_label.text = "[%s]%s" % [unit_name.to_upper(), hp_str]
+		power_label.text = "Range: %d" % int(controlled_unit.fire_range) if "fire_range" in controlled_unit else ""
 
-	if aiming_system.can_fire:
-		reload_bar.value = 100
+		if "fire_timer" in controlled_unit and "fire_interval" in controlled_unit:
+			var progress = (1.0 - maxf(controlled_unit.fire_timer, 0.0) / controlled_unit.fire_interval) * 100
+			reload_bar.value = progress
+		else:
+			reload_bar.value = 100
 	else:
-		var progress = (1.0 - aiming_system.reload_timer / aiming_system.reload_time) * 100
-		reload_bar.value = progress
+		# Normal artillery display
+		angle_label.text = "Angle: %d°" % int(aiming_system.current_angle)
+		power_label.text = "Power: %d" % int(aiming_system.launch_power)
+
+		if aiming_system.can_fire:
+			reload_bar.value = 100
+		else:
+			var progress = (1.0 - aiming_system.reload_timer / aiming_system.reload_time) * 100
+			reload_bar.value = progress
 
 	if economy:
 		money_label.text = "$%d  (+%d/s)" % [economy.player_money, int(economy.player_income)]

@@ -135,6 +135,9 @@ func _draw() -> void:
 	draw_line(Vector2(-8, 2), Vector2(-16, 14), Color(0.3, 0.3, 0.28), 2.0)
 	draw_line(Vector2(8, 2), Vector2(16, 14), Color(0.3, 0.3, 0.28), 2.0)
 
+	if input_blocked:
+		return
+
 	var s = crosshair_size
 
 	# Рисуем призрачные прицелы (старые выстрелы)
