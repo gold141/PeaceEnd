@@ -1,5 +1,7 @@
 # Manual Unit Control Implementation Plan
 
+**Status: IMPLEMENTED** (2026-03-05)
+
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
 **Goal:** Allow the player to click on any player unit to take direct control — movement (A/D), aiming (mouse), and firing (LMB) — using that unit's native capabilities.
@@ -7,6 +9,20 @@
 **Architecture:** A new `unit_control.gd` node manages selection/input/visuals. Each player unit gets a `manually_controlled` flag and `manual_fire_at(pos)` method. When controlled, the unit's auto-fire is suppressed and the artillery aiming system is blocked.
 
 **Tech Stack:** Godot 4.6.1, GDScript
+
+## Implementation Notes
+
+All 11 tasks completed. Post-plan fixes applied:
+
+1. **Input rewrite** — Selection moved from LMB release to LMB press with `set_input_as_handled()` to prevent artillery firing. Manual fire on LMB release.
+2. **Green arrow indicator** — Bouncing green triangle above hovered/controlled units for visual feedback.
+3. **Undeployed unit control** — Removed `deployed` filter from selection. Units force-deploy on selection.
+
+### Commits
+- `eddec7e` feat: add manual control support to all player units (tasks 1-7)
+- `b2b062c` feat: wire unit control into battle scene with HUD and input priority (tasks 8-10)
+- `38d8cb1` fix: rewrite unit control input handling and add arrow indicator
+- `d64c7fc` feat: allow selecting undeployed units, force-deploy on selection
 
 ---
 

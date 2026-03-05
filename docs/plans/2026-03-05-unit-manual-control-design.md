@@ -1,5 +1,7 @@
 # Manual Unit Control Design
 
+**Status: IMPLEMENTED** (2026-03-05)
+
 ## Overview
 
 Allow the player to take direct control of any player unit by clicking on it when the attack range overlay is visible (hover). The controlled unit retains all its native capabilities — movement speed, fire rate, projectile type, range, spread.
