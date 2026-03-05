@@ -11,15 +11,19 @@ var camera: Camera2D
 
 ## Currently controlled unit
 var controlled_unit: Node2D = null
+## Unit under mouse cursor (for arrow indicator)
+var hovered_unit: Node2D = null
 ## Is unit control mode active?
 var active: bool = false
 
 ## Selection threshold (pixels from unit center)
-const SELECT_THRESHOLD: float = 35.0
+const SELECT_THRESHOLD: float = 45.0
 ## Crosshair size
 const CROSSHAIR_SIZE: float = 10.0
 ## Outline pulse speed
 var outline_pulse: float = 0.0
+## Arrow bob timer
+var arrow_bob: float = 0.0
 
 signal unit_selected(unit: Node2D)
 signal unit_deselected()
@@ -32,37 +36,40 @@ func setup(rv: Node2D, aim: Node2D, cam: Camera2D) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton:
-		# Mouse button up (release) — select or fire
-		if event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
-			# Don't interact if cursor is in action panel area
-			var mouse_screen_y = get_viewport().get_mouse_position().y
-			if mouse_screen_y > 520:
-				return
+	if not (event is InputEventMouseButton or event is InputEventKey):
+		return
 
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		var mouse_screen_y = get_viewport().get_mouse_position().y
+		if mouse_screen_y > 520:
+			return
+
+		if event.pressed:
+			# === LMB PRESS: select unit or block artillery ===
 			if active:
-				# Already controlling a unit — check if clicking another unit
+				# Already controlling — check if switching to another unit
 				var clicked_unit = _find_player_unit_at_mouse()
 				if clicked_unit and clicked_unit != controlled_unit:
 					_switch_to_unit(clicked_unit)
-				else:
-					# Fire at cursor position
-					_manual_fire()
+				# Block press from reaching aiming system either way
+				get_viewport().set_input_as_handled()
 			else:
-				# Not controlling — check if clicking a player unit
+				# Not controlling — try to select
 				var clicked_unit = _find_player_unit_at_mouse()
 				if clicked_unit:
 					_select_unit(clicked_unit)
-
-		# LMB press while active — we handle release for fire, block press
-		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed and active:
-			var mouse_screen_y = get_viewport().get_mouse_position().y
-			if mouse_screen_y <= 520:
+					get_viewport().set_input_as_handled()
+				# If no unit nearby, let artillery handle the press
+		else:
+			# === LMB RELEASE: fire from controlled unit ===
+			if active:
+				_manual_fire()
 				get_viewport().set_input_as_handled()
 
-		# RMB or ESC — deselect
-		if event.button_index == MOUSE_BUTTON_RIGHT and event.pressed and active:
+	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT:
+		if event.pressed and active:
 			_deselect_unit()
+			get_viewport().set_input_as_handled()
 
 	elif event is InputEventKey and event.pressed and active:
 		if event.keycode == KEY_ESCAPE:
@@ -70,9 +77,29 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _process(delta: float) -> void:
-	if not active or not is_instance_valid(controlled_unit):
-		if active:
-			_deselect_unit()
+	# Always detect hover for arrow indicator
+	var mouse_screen_y = get_viewport().get_mouse_position().y
+	var old_hovered = hovered_unit
+	if mouse_screen_y <= 520:
+		hovered_unit = _find_player_unit_at_mouse()
+	else:
+		hovered_unit = null
+
+	# Redraw when hover state changes (for arrow)
+	if hovered_unit != old_hovered:
+		queue_redraw()
+
+	arrow_bob += delta * 4.0
+	if arrow_bob > TAU:
+		arrow_bob -= TAU
+
+	if not active:
+		if hovered_unit:
+			queue_redraw()
+		return
+
+	if not is_instance_valid(controlled_unit):
+		_deselect_unit()
 		return
 
 	# Check if unit died
@@ -95,7 +122,6 @@ func _process(delta: float) -> void:
 		controlled_unit.manual_aim_at(get_global_mouse_position())
 
 	# Hide system cursor in game area
-	var mouse_screen_y = get_viewport().get_mouse_position().y
 	if mouse_screen_y <= 520:
 		Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
 	else:
@@ -123,6 +149,8 @@ func _find_player_unit_at_mouse() -> Node2D:
 				continue
 			checked.append(unit)
 
+			if not is_instance_valid(unit):
+				continue
 			if "alive" in unit and not unit.alive:
 				continue
 			if "team" in unit and unit.team != "player":
@@ -199,8 +227,18 @@ func _get_unit_move_speed() -> float:
 
 
 func _draw() -> void:
-	if not active or not is_instance_valid(controlled_unit):
+	# --- Green arrow above hovered unit (when not controlling) ---
+	if not active and hovered_unit and is_instance_valid(hovered_unit):
+		_draw_arrow(hovered_unit)
+
+	if not active:
 		return
+
+	if not is_instance_valid(controlled_unit):
+		return
+
+	# --- Green arrow above controlled unit (stays while controlling) ---
+	_draw_arrow(controlled_unit)
 
 	# --- Green pulsing outline around controlled unit ---
 	var center = to_local(controlled_unit.global_position)
@@ -265,3 +303,22 @@ func _draw() -> void:
 		var bar_fill_rect = Rect2(center.x - bar_width / 2, bar_y, bar_width * progress, 4)
 		var bar_color = Color(0.3, 1.0, 0.3) if progress >= 1.0 else Color(0.8, 0.6, 0.2)
 		draw_rect(bar_fill_rect, bar_color)
+
+
+func _draw_arrow(unit: Node2D) -> void:
+	var bob = sin(arrow_bob) * 3.0
+	var arrow_pos = to_local(unit.global_position) + Vector2(0, -50 + bob)
+	var arrow_color = Color(0.3, 1.0, 0.3, 0.85)
+
+	# Filled downward-pointing triangle
+	var points = PackedVector2Array([
+		arrow_pos + Vector2(-7, -10),
+		arrow_pos + Vector2(7, -10),
+		arrow_pos,
+	])
+	draw_colored_polygon(points, arrow_color)
+
+	# Small outline for visibility
+	draw_line(points[0], points[1], Color(0.15, 0.6, 0.15), 1.5)
+	draw_line(points[1], points[2], Color(0.15, 0.6, 0.15), 1.5)
+	draw_line(points[2], points[0], Color(0.15, 0.6, 0.15), 1.5)
